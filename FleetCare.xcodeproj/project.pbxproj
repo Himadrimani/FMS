@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXFileReference section */
+		100000000000000000000004 /* FleetCare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FleetCare.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		100000000000000000000001 /* FleetCare */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -13,6 +17,16 @@
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		100000000000000000000008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		100000000000000000000002 = {
@@ -90,16 +104,6 @@
 		};
 /* End PBXProject section */
 
-/* Begin PBXFrameworksBuildPhase section */
-		100000000000000000000008 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
 /* Begin PBXResourcesBuildPhase section */
 		100000000000000000000009 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
@@ -119,19 +123,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXBuildFile section */
-/* End PBXBuildFile section */
-
-/* Begin PBXFileReference section */
-		100000000000000000000004 /* FleetCare.app */ = {
-			isa = PBXFileReference;
-			explicitFileType = wrapper.application;
-			includeInIndex = 0;
-			path = FleetCare.app;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXFileReference section */
 
 /* Begin XCBuildConfiguration section */
 		100000000000000000000012 /* Debug */ = {
@@ -260,12 +251,12 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = FleetCare;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Take inspection and repair evidence photos.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Use Face ID to securely access your fleet workspace.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "FleetCare uses your location for trip navigation and live operational tracking.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Take inspection and repair evidence photos.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Attach inspection and repair evidence from your photo library.";
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -298,12 +289,12 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = FleetCare;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Take inspection and repair evidence photos.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Use Face ID to securely access your fleet workspace.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "FleetCare uses your location for trip navigation and live operational tracking.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Take inspection and repair evidence photos.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Attach inspection and repair evidence from your photo library.";
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
