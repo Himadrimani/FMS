@@ -9,6 +9,49 @@ enum FleetStatus: String, Codable, CaseIterable {
     case offline = "Offline"
 }
 
+enum InventoryCategory: String, CaseIterable, Identifiable, Codable {
+    case all = "All Parts"
+    case engine = "Engine Parts"
+    case brake = "Brake Parts"
+    case tires = "Tires"
+    case electrical = "Electrical"
+    case fluids = "Fluids"
+    case generalMaintenance = "General Maintenance"
+
+    var id: String { rawValue }
+}
+
+enum InventoryStockStatus: String, Codable {
+    case healthy = "Healthy"
+    case lowStock = "Low Stock"
+    case outOfStock = "Out Of Stock"
+}
+
+struct InventoryPart: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let category: InventoryCategory
+    let currentQuantity: Int
+    let minimumQuantity: Int
+    let maximumQuantity: Int
+    let reorderThreshold: Int
+    let monthlyConsumption: Int
+    let previousMonthUsage: Int
+    let lastUpdated: Date
+
+    var stockStatus: InventoryStockStatus {
+        if currentQuantity == 0 {
+            return .outOfStock
+        }
+
+        if currentQuantity <= reorderThreshold {
+            return .lowStock
+        }
+
+        return .healthy
+    }
+}
+
 // NEW: drives which photo/icon the dashboard shows for a vehicle.
 // Add image sets named vehicle_truck / vehicle_van / vehicle_car /
 // vehicle_2wheeler in Assets.xcassets and they're used automatically.
