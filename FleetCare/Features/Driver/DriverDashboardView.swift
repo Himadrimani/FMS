@@ -12,7 +12,6 @@ struct DriverDashboardView: View {
     let vehicle: Vehicle
     let trip: FleetTrip
 
-    @State private var showingInspection = false
 
         var body: some View {
             ScrollView {
@@ -28,9 +27,7 @@ struct DriverDashboardView: View {
             }
             .background(Color(.systemGroupedBackground))
             .toolbar(.hidden, for: .navigationBar)
-            .fullScreenCover(isPresented: $showingInspection) {
-                InspectionView()
-            }
+           
         }
     
 
@@ -250,13 +247,13 @@ struct DriverDashboardView: View {
                 }
                 Spacer(minLength: 8)
             }
-            NavigationLink(destination: DetailedInspectionView(onDone: {
-                showingInspection = false           // ← not actually needed for NavigationLink
-                // NavigationLink handles its own stack, so just dismiss is enough:
-            }),
-                           isActive: $showingInspection) {
+            NavigationLink {
+                DetailedInspectionView()
+            } label: {
                 HStack {
-                    Text("Start Inspection").fontWeight(.semibold)
+                    Text("Start Inspection")
+                        .fontWeight(.semibold)
+
                     Image(systemName: "chevron.right")
                 }
                 .frame(maxWidth: .infinity)
