@@ -1,7 +1,7 @@
 import SwiftUI
 
-// MARK: - Inspection Status Enum
-enum InspectionStatus {
+// MARK: - Inspection Item Status Enum
+enum InspectionItemStatus {
     case unselected
     case pass
     case fail
@@ -13,7 +13,7 @@ struct DetailedInspectionItem: Identifiable {
     let title: String
     let subtitle: String
     let iconName: String
-    var status: InspectionStatus = .unselected
+    var status: InspectionItemStatus = .unselected
     var failureDetails: String = ""
     var attachedImage: UIImage? = nil // Stores captured photo
 }

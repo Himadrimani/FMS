@@ -13,14 +13,14 @@ enum SampleData {
     ]
 
     static let workOrders = [
-        WorkOrder(title: "Inspect brake vibration", vehicleName: "Orion 07", priority: 1, dueAt: .now.addingTimeInterval(7_200), status: .attention, source: .driverDefect),
-        WorkOrder(title: "40,000 km service", vehicleName: "Atlas 12", priority: 2, dueAt: .now.addingTimeInterval(86_400), status: .scheduled, source: .scheduled),
-        WorkOrder(title: "Replace cabin filter", vehicleName: "Nova 19", priority: 3, dueAt: .now.addingTimeInterval(172_800), status: .scheduled, source: .scheduled),
-        WorkOrder(title: "Engine temp anomaly check", vehicleName: "Atlas 12", priority: 1, dueAt: .now.addingTimeInterval(14_400), status: .attention, source: .aiPredictive),
-        WorkOrder(title: "Tire pressure sensor fix", vehicleName: "Orion 07", priority: 2, dueAt: .now.addingTimeInterval(-3_600), status: .active, source: .driverDefect),
-        WorkOrder(title: "Coolant flush", vehicleName: "Nova 19", priority: 3, dueAt: .now.addingTimeInterval(-86_400), status: .completed, source: .scheduled),
-        WorkOrder(title: "Battery health assessment", vehicleName: "Atlas 12", priority: 2, dueAt: .now.addingTimeInterval(-172_800), status: .completed, source: .aiPredictive),
-        WorkOrder(title: "Windshield replacement", vehicleName: "Nova 19", priority: 1, dueAt: .now.addingTimeInterval(3_600), status: .attention, source: .driverDefect, isExternalRepair: true)
+        WorkOrder(title: "Inspect brake vibration", vehicleName: "Orion 07", priority: 1, dueAt: .now.addingTimeInterval(7_200), status: .attention),
+        WorkOrder(title: "40,000 km service", vehicleName: "Atlas 12", priority: 2, dueAt: .now.addingTimeInterval(86_400), status: .scheduled),
+        WorkOrder(title: "Replace cabin filter", vehicleName: "Nova 19", priority: 3, dueAt: .now.addingTimeInterval(172_800), status: .scheduled),
+        WorkOrder(title: "Engine temp anomaly check", vehicleName: "Atlas 12", priority: 1, dueAt: .now.addingTimeInterval(14_400), status: .attention),
+        WorkOrder(title: "Tire pressure sensor fix", vehicleName: "Orion 07", priority: 2, dueAt: .now.addingTimeInterval(-3_600), status: .active),
+        WorkOrder(title: "Coolant flush", vehicleName: "Nova 19", priority: 3, dueAt: .now.addingTimeInterval(-86_400), status: .completed),
+        WorkOrder(title: "Battery health assessment", vehicleName: "Atlas 12", priority: 2, dueAt: .now.addingTimeInterval(-172_800), status: .completed),
+        WorkOrder(title: "Windshield replacement", vehicleName: "Nova 19", priority: 1, dueAt: .now.addingTimeInterval(3_600), status: .attention)
     ]
 
     static let inventoryParts: [(name: String, stock: Int, threshold: Int, unit: String)] = [

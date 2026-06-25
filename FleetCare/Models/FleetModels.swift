@@ -55,6 +55,7 @@ final class Vehicle {
     var vehicleTypeRaw: String = VehicleType.truck.rawValue
     var assignedAt: Date = Date.now
     var imageURLString: String? = nil
+    var totalCostOfOwnership: Double = 0.0
 
     init(
         id: UUID = UUID(),
@@ -80,6 +81,7 @@ final class Vehicle {
         self.vehicleTypeRaw = vehicleType.rawValue
         self.assignedAt = assignedAt
         self.imageURLString = imageURLString
+        self.totalCostOfOwnership = 0.0
     }
 
     var status: FleetStatus {
@@ -143,6 +145,11 @@ final class WorkOrder {
     var priority: Int
     var dueAt: Date
     var statusRaw: String
+    
+    var isExternalRepair: Bool = false
+    var laborHours: Double = 0.0
+    var partsUsed: [String] = []
+    var technicianNotes: String = ""
 
     init(
         id: UUID = UUID(),
@@ -150,7 +157,11 @@ final class WorkOrder {
         vehicleName: String,
         priority: Int,
         dueAt: Date,
-        status: FleetStatus
+        status: FleetStatus,
+        isExternalRepair: Bool = false,
+        laborHours: Double = 0.0,
+        partsUsed: [String] = [],
+        technicianNotes: String = ""
     ) {
         self.id = id
         self.title = title
@@ -158,6 +169,10 @@ final class WorkOrder {
         self.priority = priority
         self.dueAt = dueAt
         self.statusRaw = status.rawValue
+        self.isExternalRepair = isExternalRepair
+        self.laborHours = laborHours
+        self.partsUsed = partsUsed
+        self.technicianNotes = technicianNotes
     }
 
     var status: FleetStatus {

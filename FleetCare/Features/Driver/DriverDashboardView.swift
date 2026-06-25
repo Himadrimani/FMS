@@ -102,8 +102,10 @@ struct DriverDashboardView: View {
 
             HStack {
                 Label {
-                    Text("Assigned on ").foregroundStyle(.secondary)
-                    + Text(dateFormatter.string(from: vehicle.assignedAt)).bold()
+                    HStack(spacing: 0) {
+                        Text("Assigned on ").foregroundStyle(.secondary)
+                        Text(dateFormatter.string(from: vehicle.assignedAt)).bold()
+                    }
                 } icon: {
                     Image(systemName: "calendar").foregroundStyle(.secondary)
                 }
@@ -194,9 +196,11 @@ struct DriverDashboardView: View {
                     .background(Color.orange.opacity(0.15), in: Circle())
 
                 VStack(alignment: .leading, spacing: 4) {
-                    (Text("Status: ").foregroundStyle(.primary)
-                     + Text(statusText).foregroundStyle(statusColor).bold())
-                        .font(.headline)
+                    HStack(spacing: 0) {
+                        Text("Status: ").foregroundStyle(.primary)
+                        Text(statusText).foregroundStyle(statusColor).bold()
+                    }
+                    .font(.headline)
                     Text("Complete pre-trip inspection before starting your trip.")
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
