@@ -54,8 +54,3 @@ struct OnboardingView: View {
         .background(Color.appBackground)
     }
 }
-
-#Preview("Onboarding") {
-    OnboardingView()
-        .environment(SessionStore())
-}

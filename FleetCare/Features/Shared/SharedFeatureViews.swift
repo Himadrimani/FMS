@@ -162,22 +162,3 @@ struct FeatureCollectionView: View {
         "\(title) is organized around the most urgent work for the \(role.rawValue.lowercased()) role. Search, filtering, empty, loading, error, and offline states use the shared system components."
     }
 }
-
-#Preview("Messages") {
-    NavigationStack {
-        MessagesView()
-    }
-}
-
-#Preview("More - Maintenance") {
-    NavigationStack {
-        MoreFeaturesView(role: .maintenance)
-    }
-    .environment(SessionStore())
-}
-
-#Preview("Feature Collection") {
-    NavigationStack {
-        FeatureCollectionView(title: "Purchase Requests", role: .maintenance)
-    }
-}
