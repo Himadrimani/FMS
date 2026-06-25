@@ -1,171 +1,184 @@
 import SwiftUI
 
+// MARK: - Maintenance Tab View (4 Tabs)
+
 struct MaintenanceTabView: View {
+    @State private var selectedTab = 0
+    
     var body: some View {
-        TabView {
-            Tab("Work", systemImage: "wrench.and.screwdriver.fill") {
-                NavigationStack { MaintenanceDashboardView() }
+        TabView(selection: $selectedTab) {
+            Tab("Dashboard", systemImage: "square.grid.2x2.fill", value: 0) {
+                NavigationStack { MaintenanceDashboardView(selectedTab: $selectedTab) }
             }
-            Tab("Orders", systemImage: "list.bullet.clipboard.fill") {
-                NavigationStack { WorkOrdersView() }
+            Tab("Work Orders", systemImage: "wrench.and.screwdriver.fill", value: 1) {
+                NavigationStack { MaintenanceWorkOrdersView() }
             }
-            Tab("Inventory", systemImage: "shippingbox.fill") {
-                NavigationStack { InventoryView() }
+            Tab("Inventory", systemImage: "shippingbox.fill", value: 2) {
+                NavigationStack { MaintenanceInventoryView() }
             }
-            Tab("Messages", systemImage: "message.fill") {
-                NavigationStack { MessagesView() }
-            }
-            Tab("More", systemImage: "ellipsis") {
-                NavigationStack { MoreFeaturesView(role: .maintenance) }
+            Tab("Chat", systemImage: "bubble.left.and.bubble.right.fill", value: 3) {
+                NavigationStack { MaintenanceChatView() }
             }
         }
     }
 }
 
-struct MaintenanceDashboardView: View {
-    var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: FleetSpacing.xLarge) {
-                Text("Today’s work")
-                    .font(.largeTitle.bold())
-                HStack(spacing: FleetSpacing.medium) {
-                    MetricCard(title: "Due today", value: "4", detail: "1 urgent", symbol: "calendar.badge.exclamationmark", tint: .orange)
-                    MetricCard(title: "Completed", value: "3", detail: "On schedule", symbol: "checkmark.circle.fill", tint: .green)
-                }
-                SectionHeader(title: "Next up")
-                if let order = SampleData.workOrders.first {
-                    NavigationLink {
-                        WorkOrderDetailView(order: order)
-                    } label: {
-                        WorkOrderCard(order: order)
-                    }
-                    .buttonStyle(.plain)
-                }
-                SectionHeader(title: "Parts watch")
-                InsightCard(title: "Inventory forecast", summary: "Front brake pad stock may reach minimum level in 18 days.", score: 82, recommendation: "Create purchase request")
-            }
-            .padding()
-        }
-        .background(Color.appBackground)
-        .navigationTitle("Work")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink(destination: AccountView()) {
-                    Image(systemName: "person.crop.circle")
-                }
-                .accessibilityLabel("Account")
-            }
-        }
-    }
-}
 
-struct WorkOrdersView: View {
-    var body: some View {
-        List(SampleData.workOrders) { order in
-            NavigationLink {
-                WorkOrderDetailView(order: order)
-            } label: {
-                WorkOrderCard(order: order)
-            }
-        }
-        .navigationTitle("Work Orders")
-    }
-}
-
-private struct WorkOrderCard: View {
-    let order: WorkOrder
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: FleetSpacing.small) {
-            HStack {
-                Text(order.title).font(.headline)
-                Spacer()
-                StatusBadge(status: order.status)
-            }
-            Text(order.vehicleName)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Text("Due \(order.dueAt, format: .relative(presentation: .named))")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.vertical, FleetSpacing.xSmall)
-    }
-}
+// MARK: - Work Order Detail View
 
 struct WorkOrderDetailView: View {
     let order: WorkOrder
-    @State private var notes = ""
-    @State private var completedSteps = Set<Int>()
-
-    private let steps = ["Confirm reported symptom", "Photograph condition", "Complete repair", "Record parts and labor", "Quality inspection"]
+    @State private var isPhysicalRepairComplete = false
+    @State private var isTestDriveComplete = false
+    
+    @State private var laborHoursInput: String = ""
+    @State private var newPartInput: String = ""
+    @State private var loggedParts: [String] = []
+    @State private var technicianNotes: String = ""
+    
+    private var isReadyToComplete: Bool {
+        isPhysicalRepairComplete && isTestDriveComplete
+    }
 
     var body: some View {
         List {
+            // MARK: Header
             Section {
-                Text(order.title).font(.title.bold())
-                Text(order.vehicleName).foregroundStyle(.secondary)
-                StatusBadge(status: order.status)
-            }
-            Section("Repair workflow") {
-                ForEach(steps.indices, id: \.self) { index in
-                    Button {
-                        if completedSteps.contains(index) { completedSteps.remove(index) } else { completedSteps.insert(index) }
-                    } label: {
-                        Label(steps[index], systemImage: completedSteps.contains(index) ? "checkmark.circle.fill" : "\(index + 1).circle")
-                            .frame(minHeight: 44)
-                    }
-                    .accessibilityValue(completedSteps.contains(index) ? "Completed" : "Not completed")
+                VStack(alignment: .leading, spacing: FleetSpacing.medium) {
+                    Text(order.title)
+                        .font(.title2.bold())
+                    Text(order.vehicleName)
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
                 }
             }
-            Section("Evidence") {
-                Button("Take Photo", systemImage: "camera.fill") {}
-                Button("Add from Photos", systemImage: "photo.on.rectangle") {}
+
+            // MARK: Logging Data & Resources
+            Section("Logging Data") {
+                // Parts
+                VStack(alignment: .leading, spacing: FleetSpacing.small) {
+                    Text("Parts Used").font(.subheadline.bold())
+                    ForEach(loggedParts, id: \.self) { part in
+                        Label(part, systemImage: "shippingbox.fill")
+                            .font(.caption)
+                    }
+                    HStack {
+                        TextField("e.g. 2x brake pads", text: $newPartInput)
+                            .textFieldStyle(.roundedBorder)
+                        Button("Add") {
+                            if !newPartInput.isEmpty {
+                                loggedParts.append(newPartInput)
+                                newPartInput = ""
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(newPartInput.isEmpty)
+                    }
+                }
+                .padding(.vertical, 4)
+
+                // Labor
+                HStack {
+                    Text("Labor Hours").font(.subheadline.bold())
+                    Spacer()
+                    TextField("0.0", text: $laborHoursInput)
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 80)
+                }
+
+                // Notes
+                VStack(alignment: .leading) {
+                    Text("Final Notes").font(.subheadline.bold())
+                    TextField("Summary of resolution...", text: $technicianNotes, axis: .vertical)
+                        .lineLimit(3...5)
+                }
             }
-            Section("Technician notes") {
-                TextField("Add a short note", text: $notes, axis: .vertical)
-                    .lineLimit(3...6)
+
+            // MARK: Evidence (Photos)
+            if order.isExternalRepair {
+                Section("Photos (After Repair)") {
+                    Button("Take Photo", systemImage: "camera.fill") {}
+                    Button("Add from Photos", systemImage: "photo.on.rectangle") {}
+                }
             }
+
+            // MARK: Verification
+            Section("Job Verification") {
+                Button {
+                    withAnimation(.snappy) {
+                        isPhysicalRepairComplete.toggle()
+                    }
+                } label: {
+                    Label {
+                        Text("Physical repair complete")
+                            .foregroundStyle(isPhysicalRepairComplete ? .secondary : .primary)
+                    } icon: {
+                        Image(systemName: isPhysicalRepairComplete ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(isPhysicalRepairComplete ? .green : .brandPrimary)
+                    }
+                }
+
+                Button {
+                    withAnimation(.snappy) {
+                        isTestDriveComplete.toggle()
+                    }
+                } label: {
+                    Label {
+                        Text("Test drive verified")
+                            .foregroundStyle(isTestDriveComplete ? .secondary : .primary)
+                    } icon: {
+                        Image(systemName: isTestDriveComplete ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(isTestDriveComplete ? .green : .brandPrimary)
+                    }
+                }
+            }
+
+            // MARK: Complete
             Section {
-                Button("Complete Work Order", systemImage: "checkmark.seal.fill") {}
-                    .disabled(completedSteps.count != steps.count)
+                Button {
+                    completeWorkOrder()
+                } label: {
+                    Label(order.status == .completed ? "Completed" : "Complete Work Order", systemImage: "checkmark.seal.fill")
+                        .font(.headline)
+                        .foregroundStyle(order.status == .completed ? .green : .brandPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, FleetSpacing.small)
+                }
+                .disabled(!isReadyToComplete || order.status == .completed)
             }
         }
         .navigationTitle("Work Order")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            laborHoursInput = order.laborHours > 0 ? String(format: "%.1f", order.laborHours) : ""
+            loggedParts = order.partsUsed
+            technicianNotes = order.technicianNotes
+        }
+    }
+    
+    private func completeWorkOrder() {
+        withAnimation {
+            // Update WorkOrder Status
+            order.status = .completed
+            
+            // Save Logs
+            order.laborHours = Double(laborHoursInput) ?? 0.0
+            order.partsUsed = loggedParts
+            order.technicianNotes = technicianNotes
+            
+            // Mock Vehicle Analytics Update
+            if let vehicle = SampleData.vehicles.first(where: { $0.name == order.vehicleName }) {
+                vehicle.status = .active // Available
+                // Mock cost calc: $100/hr labor + flat $50 for parts
+                let laborCost = order.laborHours * 100.0
+                let partsCost = Double(loggedParts.count * 50)
+                vehicle.totalCostOfOwnership += (laborCost + partsCost)
+            }
+        }
     }
 }
 
-struct InventoryView: View {
-    private let parts = [
-        ("Front brake pads", 8, 10),
-        ("Oil filters", 24, 12),
-        ("Cabin filters", 7, 6),
-        ("Coolant, 5 L", 14, 8)
-    ]
-
-    var body: some View {
-        List {
-            Section("Parts") {
-                ForEach(parts, id: \.0) { part in
-                    VStack(alignment: .leading, spacing: FleetSpacing.small) {
-                        HStack {
-                            Text(part.0).font(.headline)
-                            Spacer()
-                            Text("\(part.1) in stock")
-                                .foregroundStyle(part.1 <= part.2 ? .orange : .secondary)
-                        }
-                        ProgressView(value: Double(part.1), total: Double(max(part.2 * 2, part.1)))
-                            .tint(part.1 <= part.2 ? .orange : .brandPrimary)
-                    }
-                    .padding(.vertical, FleetSpacing.xSmall)
-                }
-            }
-            Section {
-                Button("New Purchase Request", systemImage: "cart.badge.plus") {}
-            }
-        }
-        .navigationTitle("Inventory")
-    }
+#Preview {
+    MaintenanceTabView()
 }
