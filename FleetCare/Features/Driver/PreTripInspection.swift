@@ -48,26 +48,6 @@ let otherInspectionItems: [AvailableInspectionItem] = [
 let allAvailableItems = defaultInspectionItems + otherInspectionItems
 
 // MARK: - ViewModel
-
-//class InspectionVM: ObservableObject {
-//    @Published var items: [InspectionItem] = []
-//    @Published var activeIndex: Int = 0
-//    @Published var showSheet = false
-//    @Published var showCamera = false
-//    @Published var cameraTargetID: UUID? = nil
-//
-//    var completed: Int { items.filter { $0.status != .unselected }.count }
-//    var total: Int { items.count }
-//    var fraction: Double { total > 0 ? Double(completed) / Double(total) : 0 }
-//    var percent: Int { Int(fraction * 100) }
-//
-//    func isAdded(_ title: String) -> Bool { items.contains { $0.title == title } }
-//
-//    func add(_ a: AvailableInspectionItem) {
-//        guard !isAdded(a.title) else { return }
-//        items.append(InspectionItem(title: a.title, iconName: a.iconName, iconColor: a.iconColor))
-//    }
-//}
 class InspectionVM: ObservableObject {
     @Published var items: [InspectionItem]
     @Published var activeIndex: Int = 0
@@ -102,115 +82,11 @@ struct DetailedInspectionView: View {
     @StateObject private var vm = InspectionVM()
     @Environment(\.dismiss) private var dismiss
     var onDone: () -> Void = {}
-
-//    var body: some View {
-//        ZStack(alignment: .bottom) {
-//            Color(.systemGroupedBackground).ignoresSafeArea()
-//
-//            VStack(spacing: 0) {
-//                // Page header
-//                VStack(alignment: .leading, spacing: 4) {
-//                    Text("Pre-Trip Inspection")
-//                        .font(.title.bold())
-//                }
-//                .frame(maxWidth: .infinity, alignment: .leading)
-//                .padding(20)
-//                .background(Color(.systemGroupedBackground))
-//
-//                ScrollView(showsIndicators: false) {
-//                    VStack(alignment: .leading, spacing: 20) {
-//
-//                        // Checklist header
-//                        HStack {
-//                            Text("Inspection Checklist").font(.title2.bold())
-//                            Spacer()
-//                            Button { vm.showSheet = true } label: {
-//                                Image(systemName: "plus")
-//                                    .font(.title3.weight(.semibold))
-//                                    .foregroundStyle(.white)
-//                                    .frame(width: 40, height: 40)
-//                                    .background(Color.blue, in: Circle())
-//                            }
-//                        }
-//
-//                        // Item cards
-//                        if vm.items.isEmpty {
-//                            emptyState
-//                        } else {
-//                            ForEach(vm.items.indices, id: \.self) { idx in
-//                                InspectionItemCard(item: $vm.items[idx], onCameraTap: {
-//                                    vm.cameraTargetID = vm.items[idx].id
-//                                    vm.showCamera = true
-//                                })
-//                            }
-//                        }
-//
-//                        // Summary table
-//                        if vm.items.contains(where: { $0.status != .unselected }) {
-//                            summaryTable
-//                        }
-//
-//                        // Report Defect
-//                        NavigationLink(destination: ReportDefectView()) {
-//                            Label("Report Defect", systemImage: "exclamationmark.triangle.fill")
-//                                .font(.subheadline.weight(.semibold))
-//                                .foregroundStyle(.orange)
-//                                .frame(maxWidth: .infinity)
-//                                .padding(.vertical, 14)
-//                                .background(Color.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
-//                                .overlay(RoundedRectangle(cornerRadius: 12)
-//                                    .stroke(Color.orange.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [5])))
-//                        }
-//
-//                        Spacer(minLength: 100)
-//                    }
-//                    .padding(.horizontal, 20)
-//                    .padding(.top, 8)
-//                }
-//            }
-//
-//            // Bottom submit bar
-//            VStack(spacing: 0) {
-//                Button {
-//                    // submit logic
-//                } label: {
-//                    Text("Submit Inspection")
-//                        .font(.headline).foregroundStyle(.white)
-//                        .frame(maxWidth: .infinity).padding(.vertical, 16)
-//                        .background(
-//                            vm.completed == vm.total && vm.total > 0 ? Color.blue : Color.blue.opacity(0.35),
-//                            in: RoundedRectangle(cornerRadius: 14))
-//                }
-//                .disabled(vm.completed != vm.total || vm.total == 0)
-//            }
-//            .padding(.horizontal, 20).padding(.vertical, 14)
-//            .background(Color(.systemBackground).shadow(color: .black.opacity(0.07), radius: 8, x: 0, y: -3))
-//        }
-//        .navigationBarBackButtonHidden(true)
-//        .navigationTitle("").navigationBarTitleDisplayMode(.inline)
-//        .toolbar {
-//            ToolbarItem(placement: .navigationBarLeading) {
-//                Button { dismiss() } label: {
-//                    HStack(spacing: 4) {
-//                        Image(systemName: "chevron.left").fontWeight(.semibold)
-//                        Text("Back")
-//                    }.foregroundStyle(.blue)
-//                }
-//            }
-//
-//        }
-//        .sheet(isPresented: $vm.showSheet) { AddItemSheet(vm: vm) }
-//        .sheet(isPresented: $vm.showCamera) {
-//            if let idx = vm.items.firstIndex(where: { $0.id == vm.cameraTargetID }) {
-//                CameraPickerBridge(images: $vm.items[idx].attachedImages)
-//            }
-//        }
-//    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
             Color(.systemGroupedBackground).ignoresSafeArea()
-
+            
             VStack(spacing: 0) {
                 // Page header
                 VStack(alignment: .leading, spacing: 4) {
@@ -220,13 +96,13 @@ struct DetailedInspectionView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
                 .background(Color(.systemGroupedBackground))
-
+                
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 20) {
-
+                        
                         // Checklist header — no + button anymore
                         Text("Inspection Checklist").font(.title2.bold())
-
+                        
                         // Item cards (always has items since defaults are pre-loaded)
                         ForEach(vm.items.indices, id: \.self) { idx in
                             InspectionItemCard(item: $vm.items[idx], onCameraTap: {
@@ -234,7 +110,7 @@ struct DetailedInspectionView: View {
                                 vm.showCamera = true
                             })
                         }
-
+                        
                         // "Add More Items" button — replaces the old + in header
                         Button { vm.showSheet = true } label: {
                             Label("Add More Items", systemImage: "plus.circle.fill")
@@ -246,13 +122,6 @@ struct DetailedInspectionView: View {
                                 .overlay(RoundedRectangle(cornerRadius: 12)
                                     .stroke(Color.blue.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [5])))
                         }
-
-                        // Summary table (shown once any item is checked)
-//                        if vm.items.contains(where: { $0.status != .unselected }) {
-//                            summaryTable
-//                        }
-
-                        // Report Defect row — shows badge if reports submitted
                         
                         NavigationLink(destination: ReportDefectView(vm: vm)) {
                             HStack {
@@ -275,14 +144,14 @@ struct DetailedInspectionView: View {
                             .overlay(RoundedRectangle(cornerRadius: 12)
                                 .stroke(Color.orange.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [5])))
                         }
-
+                        
                         Spacer(minLength: 100)
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
                 }
             }
-
+            
             // Bottom submit bar
             VStack(spacing: 0) {
                 // Hidden NavigationLink driven by vm.navigateToSummary
@@ -324,7 +193,7 @@ struct DetailedInspectionView: View {
             }
         }
     }
-
+    
     // MARK: Empty state
     private var emptyState: some View {
         VStack(spacing: 10) {
@@ -335,57 +204,8 @@ struct DetailedInspectionView: View {
         .frame(maxWidth: .infinity).padding(40)
         .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 16))
     }
-
+    
     // MARK: Summary table
-//    private var summaryTable: some View {
-//        VStack(alignment: .leading, spacing: 0) {
-//            Text("Inspection Summary").font(.title2.bold()).padding(.bottom, 12)
-//
-//            // Header row
-//            HStack {
-//                Text("ITEM NAME").frame(maxWidth: .infinity, alignment: .leading)
-//                Text("STATUS").frame(width: 88, alignment: .center)
-//                Text("ACTION").frame(width: 54, alignment: .trailing)
-//            }
-//            .font(.caption.weight(.bold)).foregroundStyle(.secondary)
-//            .padding(.horizontal, 14).padding(.vertical, 9)
-//            .background(Color(.systemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
-//
-//            let checked = vm.items.filter { $0.status != .unselected }
-//            VStack(spacing: 0) {
-//                ForEach(checked) { item in
-//                    HStack {
-//                        Text(item.title).frame(maxWidth: .infinity, alignment: .leading)
-//
-//                        HStack(spacing: 4) {
-//                            Circle().fill(item.status == .pass ? Color.green : Color.red)
-//                                .frame(width: 7, height: 7)
-//                            Text(item.status == .pass ? "Passed" : "Failed")
-//                                .font(.caption.weight(.semibold))
-//                                .foregroundStyle(item.status == .pass ? .green : .red)
-//                        }
-//                        .padding(.horizontal, 8).padding(.vertical, 5)
-//                        .background((item.status == .pass ? Color.green : Color.red).opacity(0.12), in: Capsule())
-//                        .frame(width: 88)
-//
-//                        Button("View") {
-//                            if let idx = vm.items.firstIndex(where: { $0.id == item.id }) {
-//                                vm.activeIndex = idx
-//                            }
-//                        }
-//                        .font(.subheadline.weight(.semibold)).foregroundStyle(.blue)
-//                        .frame(width: 54, alignment: .trailing)
-//                    }
-//                    .padding(.horizontal, 14).padding(.vertical, 13)
-//                    .background(Color(.systemBackground))
-//
-//                    if item.id != checked.last?.id { Divider().padding(.leading, 14) }
-//                }
-//            }
-//            .clipShape(RoundedRectangle(cornerRadius: 12))
-//            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(.systemGray5), lineWidth: 1))
-//        }
-//    }
 }
 
 // MARK: - Inspection Item Card
@@ -515,12 +335,6 @@ struct AddItemSheet: View {
     @ObservedObject var vm: InspectionVM
     @Environment(\.dismiss) private var dismiss
     @State private var search = ""
-
-//    var filtered: (defaults: [AvailableInspectionItem], others: [AvailableInspectionItem]) {
-//        let q = search.trimmingCharacters(in: .whitespaces)
-//        let all = q.isEmpty ? allAvailableItems : allAvailableItems.filter { $0.title.localizedCaseInsensitiveContains(q) }
-//        return (all.filter { $0.isDefault }, all.filter { !$0.isDefault })
-//    }
     var filtered: (defaults: [AvailableInspectionItem], others: [AvailableInspectionItem]) {
         let q = search.trimmingCharacters(in: .whitespaces)
         // Only show otherInspectionItems — defaults are already on the main screen
@@ -529,28 +343,6 @@ struct AddItemSheet: View {
         }
         return ([], pool)   // defaults bucket always empty now
     }
-//    var body: some View {
-//        NavigationStack {
-//            List {
-//                if !filtered.defaults.isEmpty {
-//                    Section("Default") { rows(filtered.defaults) }
-//                }
-//                if !filtered.others.isEmpty {
-//                    Section("Other") { rows(filtered.others) }
-//                }
-//            }
-//            .listStyle(.insetGrouped)
-//            .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always),
-//                        prompt: "Search items")
-//            .navigationTitle("Add Inspection Item")
-//            .navigationBarTitleDisplayMode(.inline)
-//            .toolbar {
-//                ToolbarItem(placement: .navigationBarTrailing) {
-//                    Button("Done") { dismiss() }.fontWeight(.semibold)
-//                }
-//            }
-//        }
-//    }
     
     var body: some View {
         NavigationStack {

@@ -12,7 +12,7 @@ struct DriverDashboardView: View {
     let vehicle: Vehicle
     let trip: FleetTrip
 
-
+    @State private var showInspection = false
         var body: some View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
@@ -240,26 +240,25 @@ struct DriverDashboardView: View {
                     Text("Status: Pending")
                         .font(.headline)
                         .foregroundStyle(.orange)
-
-                    Text("Complete pre-trip inspection before starting your trip.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
             }
-            NavigationLink {
-                DetailedInspectionView()
+            Button {
+                showInspection = true
             } label: {
                 HStack {
-                    Text("Start Inspection")
-                        .fontWeight(.semibold)
-
+                    Text("Start Inspection").fontWeight(.semibold)
                     Image(systemName: "chevron.right")
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .foregroundStyle(.white)
                 .background(.orange, in: RoundedRectangle(cornerRadius: 12))
+            }
+            .navigationDestination(isPresented: $showInspection) {
+                DetailedInspectionView(onDone: {
+                    showInspection = false   // ← this collapses the whole stack
+                })
             }
 
             HStack(alignment: .top, spacing: 8) {
