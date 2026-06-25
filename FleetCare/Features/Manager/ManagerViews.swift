@@ -281,3 +281,41 @@ struct InsightsView: View {
         .navigationTitle("Insights")
     }
 }
+
+#Preview("Manager Tab") {
+    let session = SessionStore()
+    _ = session.authenticate(email: "manager@fleetcare.example", password: "password", users: [])
+    return ManagerTabView()
+        .environment(session)
+}
+
+#Preview("Manager Dashboard") {
+    NavigationStack {
+        ManagerDashboardView()
+    }
+    .environment(SessionStore())
+}
+
+#Preview("Fleet List") {
+    NavigationStack {
+        FleetListView()
+    }
+}
+
+#Preview("Vehicle Detail") {
+    NavigationStack {
+        VehicleDetailView(vehicle: SampleData.vehicles[0])
+    }
+}
+
+#Preview("Fleet Map") {
+    NavigationStack {
+        FleetMapView()
+    }
+}
+
+#Preview("Insights") {
+    NavigationStack {
+        InsightsView()
+    }
+}

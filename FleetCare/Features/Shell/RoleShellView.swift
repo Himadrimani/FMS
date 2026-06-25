@@ -9,7 +9,7 @@ struct RoleShellView: View {
             if session.isOffline {
                 OfflineBanner()
             }
-            switch session.selectedRole {
+            switch session.currentRole {
             case .fleetManager:
                 ManagerTabView()
             case .driver:
@@ -31,18 +31,14 @@ struct AccountView: View {
         @Bindable var session = session
         Form {
             Section("Workspace") {
-                Picker("Preview role", selection: $session.selectedRole) {
-                    ForEach(UserRole.allCases) { role in
-                        Label(role.rawValue, systemImage: role.symbol)
-                            .tag(role)
-                    }
-                }
+                LabeledContent("Signed in", value: session.signedInEmail)
+                LabeledContent("Role", value: session.currentRole.rawValue)
                 Toggle("Simulate offline mode", isOn: $session.isOffline)
             }
 
             Section("Security") {
-                Label("Passkey enabled", systemImage: "key.fill")
-                Label("Face ID enabled", systemImage: "faceid")
+                Label("Password sign-in", systemImage: "key.fill")
+                Label("Role validated at login", systemImage: "person.badge.shield.checkmark")
                 Label("Data encrypted on device", systemImage: "lock.shield.fill")
             }
 
@@ -54,4 +50,37 @@ struct AccountView: View {
         }
         .navigationTitle("Account")
     }
+}
+
+#Preview("Role Shell - Manager") {
+    let session = SessionStore()
+    _ = session.authenticate(email: "manager@fleetcare.example", password: "password", users: [])
+    return RoleShellView()
+        .environment(session)
+        .modelContainer(for: [
+            FleetUser.self,
+            Vehicle.self,
+            FleetTrip.self,
+            Inspection.self,
+            DefectReport.self,
+            WorkOrder.self,
+            MaintenanceTask.self,
+            MaintenanceHistory.self,
+            InventoryItem.self,
+            PurchaseRequest.self,
+            FuelLog.self,
+            FleetMessage.self,
+            FleetNotification.self,
+            ComplianceDocument.self,
+            AIAlert.self
+        ], inMemory: true)
+}
+
+#Preview("Account") {
+    let session = SessionStore()
+    _ = session.authenticate(email: "maintenance@fleetcare.example", password: "password", users: [])
+    return NavigationStack {
+        AccountView()
+    }
+    .environment(session)
 }

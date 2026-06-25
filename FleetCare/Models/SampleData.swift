@@ -33,4 +33,22 @@ enum SampleData {
         ("Air filters", 5, 8, "pcs"),
         ("Transmission fluid, 1 L", 11, 6, "bottles")
     ]
+
+    static let inventoryItems = [
+        InventoryItem(partID: "ENG-AF-1001", partName: "Air Filter", category: .engineParts, quantity: 18, minimumQuantity: 8, maximumQuantity: 40, reorderThreshold: 10, lastUpdated: .now.addingTimeInterval(-7_200)),
+        InventoryItem(partID: "ENG-FF-1002", partName: "Fuel Filter", category: .engineParts, quantity: 9, minimumQuantity: 8, maximumQuantity: 32, reorderThreshold: 10, lastUpdated: .now.addingTimeInterval(-32_400)),
+        InventoryItem(partID: "ENG-OF-1003", partName: "Oil Filter", category: .engineParts, quantity: 24, minimumQuantity: 12, maximumQuantity: 48, reorderThreshold: 14, lastUpdated: .now.addingTimeInterval(-86_400)),
+        InventoryItem(partID: "ENG-SP-1004", partName: "Spark Plug", category: .engineParts, quantity: 30, minimumQuantity: 16, maximumQuantity: 64, reorderThreshold: 18, lastUpdated: .now.addingTimeInterval(-110_000)),
+        InventoryItem(partID: "BRK-PD-2001", partName: "Brake Pads", category: .brakeParts, quantity: 8, minimumQuantity: 10, maximumQuantity: 44, reorderThreshold: 12, lastUpdated: .now.addingTimeInterval(-14_400)),
+        InventoryItem(partID: "BRK-DC-2002", partName: "Brake Disc", category: .brakeParts, quantity: 6, minimumQuantity: 6, maximumQuantity: 24, reorderThreshold: 8, lastUpdated: .now.addingTimeInterval(-172_800)),
+        InventoryItem(partID: "BRK-FL-2003", partName: "Brake Fluid", category: .brakeParts, quantity: 0, minimumQuantity: 8, maximumQuantity: 30, reorderThreshold: 8, lastUpdated: .now.addingTimeInterval(-21_600)),
+        InventoryItem(partID: "TIR-FT-3001", partName: "Front Tire", category: .tires, quantity: 14, minimumQuantity: 8, maximumQuantity: 28, reorderThreshold: 8, lastUpdated: .now.addingTimeInterval(-54_000)),
+        InventoryItem(partID: "TIR-RR-3002", partName: "Rear Tire", category: .tires, quantity: 7, minimumQuantity: 8, maximumQuantity: 28, reorderThreshold: 8, lastUpdated: .now.addingTimeInterval(-64_000)),
+        InventoryItem(partID: "ELC-BT-4001", partName: "Battery", category: .electrical, quantity: 5, minimumQuantity: 4, maximumQuantity: 18, reorderThreshold: 5, lastUpdated: .now.addingTimeInterval(-18_000)),
+        InventoryItem(partID: "ELC-HD-4004", partName: "Headlight", category: .electrical, quantity: 11, minimumQuantity: 6, maximumQuantity: 26, reorderThreshold: 8, lastUpdated: .now.addingTimeInterval(-96_000)),
+        InventoryItem(partID: "FLD-EO-5001", partName: "Engine Oil", category: .fluids, quantity: 22, minimumQuantity: 12, maximumQuantity: 50, reorderThreshold: 16, lastUpdated: .now.addingTimeInterval(-8_000)),
+        InventoryItem(partID: "FLD-CL-5002", partName: "Coolant", category: .fluids, quantity: 10, minimumQuantity: 8, maximumQuantity: 36, reorderThreshold: 10, lastUpdated: .now.addingTimeInterval(-70_000)),
+        InventoryItem(partID: "GMT-BL-6003", partName: "Belts", category: .generalMaintenance, quantity: 13, minimumQuantity: 8, maximumQuantity: 30, reorderThreshold: 9, lastUpdated: .now.addingTimeInterval(-48_000)),
+        InventoryItem(partID: "GMT-HS-6004", partName: "Hoses", category: .generalMaintenance, quantity: 4, minimumQuantity: 6, maximumQuantity: 24, reorderThreshold: 6, lastUpdated: .now.addingTimeInterval(-120_000))
+    ]
 }

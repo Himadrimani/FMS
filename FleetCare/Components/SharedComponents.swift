@@ -22,6 +22,30 @@ struct StatusBadge: View {
     }
 }
 
+struct StockHealthBadge: View {
+    let health: StockHealth
+
+    private var color: Color {
+        switch health {
+        case .healthy: .green
+        case .lowStock: .orange
+        case .outOfStock: .red
+        }
+    }
+
+    private var symbol: String {
+        "circle.fill"
+    }
+
+    var body: some View {
+        Label(health.rawValue, systemImage: symbol)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(color)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Stock status: \(health.rawValue)")
+    }
+}
+
 struct MetricCard: View {
     let title: String
     let value: String
@@ -121,4 +145,20 @@ struct OfflineBanner: View {
             .background(.orange)
             .accessibilityLabel("Offline. Changes will sync automatically.")
     }
+}
+
+#Preview("Shared Components") {
+    ScrollView {
+        VStack(alignment: .leading, spacing: FleetSpacing.large) {
+            StatusBadge(status: .active)
+            StockHealthBadge(health: .lowStock)
+            MetricCard(title: "Due today", value: "4", detail: "1 urgent", symbol: "calendar.badge.exclamationmark", tint: .orange)
+            InsightCard(title: "Inventory forecast", summary: "Brake pad stock may reach minimum level in 18 days.", score: 82, recommendation: "Create purchase request")
+            SectionHeader(title: "Section", actionTitle: "View All") {}
+            EmptyStateView(title: "No records", message: "New activity will appear here.", symbol: "tray")
+            OfflineBanner()
+        }
+        .padding()
+    }
+    .background(Color.appBackground)
 }

@@ -1,11 +1,15 @@
-import AuthenticationServices
+import SwiftData
 import SwiftUI
 
 struct LoginView: View {
     @Environment(SessionStore.self) private var session
+    @Query(sort: \FleetUser.email) private var users: [FleetUser]
     @State private var email = "manager@fleetcare.example"
     @State private var password = "password"
-    @State private var showingRecovery = false
+    @State private var personalPassword = ""
+    @State private var confirmedPassword = ""
+    @State private var errorMessage: String?
+    @State private var requiresActivation = false
 
     var body: some View {
         NavigationStack {
@@ -29,75 +33,93 @@ struct LoginView: View {
                             .keyboardType(.emailAddress)
                             .textInputAutocapitalization(.never)
                             .accessibilityLabel("Work email")
-                        SecureField("Password", text: $password)
-                            .textContentType(.password)
-                            .accessibilityLabel("Password")
+                        if requiresActivation {
+                            SecureField("Create personal password", text: $personalPassword)
+                                .textContentType(.newPassword)
+                                .accessibilityLabel("Create personal password")
+                            SecureField("Confirm password", text: $confirmedPassword)
+                                .textContentType(.newPassword)
+                                .accessibilityLabel("Confirm password")
+                        } else {
+                            SecureField("Password", text: $password)
+                                .textContentType(.password)
+                                .accessibilityLabel("Password")
+                        }
                     }
                     .textFieldStyle(.roundedBorder)
 
-                    Button("Sign In") {
-                        session.signIn()
+                    if let errorMessage {
+                        Label(errorMessage, systemImage: "exclamationmark.circle.fill")
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                            .accessibilityLabel("Error: \(errorMessage)")
+                    }
+
+                    Button(requiresActivation ? "Activate Account" : "Sign In") {
+                        submit()
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                     .frame(maxWidth: .infinity)
 
-                    SignInWithAppleButton(.signIn) { _ in
-                    } onCompletion: { _ in
-                        session.signIn()
-                    }
-                    .signInWithAppleButtonStyle(.black)
-                    .frame(height: 50)
-                    .clipShape(.rect(cornerRadius: FleetRadius.control))
-                    .accessibilityHint("Signs in using your Apple Account or passkey")
-
-                    Button("Use Face ID") {
-                        session.signIn()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    .frame(maxWidth: .infinity)
-
-                    Button("Forgot password?") {
-                        showingRecovery = true
-                    }
-                    .frame(maxWidth: .infinity)
+                    Text(requiresActivation ? "Create a personal password to complete first login." : "Use the temporary password supplied by the Fleet Manager on first login.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .accessibilityHint("Fleet Manager controls account creation and temporary password distribution.")
                 }
                 .padding(FleetSpacing.xLarge)
             }
             .background(Color.appBackground)
-            .sheet(isPresented: $showingRecovery) {
-                PasswordRecoveryView()
+        }
+    }
+
+    private func submit() {
+        errorMessage = nil
+        guard email.contains("@") else {
+            errorMessage = "Enter a valid work email."
+            return
+        }
+
+        if requiresActivation {
+            guard personalPassword.count >= 8 else {
+                errorMessage = "Password must be at least 8 characters."
+                return
             }
+            guard personalPassword == confirmedPassword else {
+                errorMessage = "Passwords do not match."
+                return
+            }
+            handle(session.activate(email: email, users: users))
+            return
+        }
+
+        guard !password.isEmpty else {
+            errorMessage = "Enter your password."
+            return
+        }
+
+        if password.lowercased() == "temporary" {
+            handle(session.authenticate(email: email, password: password, users: users))
+            password = ""
+        } else {
+            handle(session.authenticate(email: email, password: password, users: users))
+        }
+    }
+
+    private func handle(_ result: AuthenticationResult) {
+        switch result {
+        case .authenticated:
+            break
+        case .requiresActivation:
+            requiresActivation = true
+        case .failure(let message):
+            errorMessage = message
         }
     }
 }
 
-private struct PasswordRecoveryView: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var email = ""
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Work email", text: $email)
-                        .textContentType(.emailAddress)
-                } footer: {
-                    Text("We’ll send a one-time verification code. Codes expire after 10 minutes.")
-                }
-            }
-            .navigationTitle("Reset Password")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Send Code") { dismiss() }
-                        .disabled(email.isEmpty)
-                }
-            }
-        }
-        .presentationDetents([.medium])
-    }
+#Preview("Login") {
+    LoginView()
+        .environment(SessionStore())
+        .modelContainer(for: [FleetUser.self], inMemory: true)
 }
