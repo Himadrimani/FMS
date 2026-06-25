@@ -20,7 +20,6 @@ struct DriverTabView: View {
                     // SampleData for now — swap for SessionStore driver
                     // and the @Query'd assigned vehicle / current trip.
                     DriverDashboardView(
-                        driverName: "John Smith",
                         vehicle: SampleData.vehicles[0],
                         trip: SampleData.trips[0]
                     )

@@ -2,7 +2,7 @@ import Foundation
 
 enum SampleData {
     static let vehicles = [
-        Vehicle(name: "Atlas 12", registration: "MH 12 AB 4821", make: "Tata", model: "Prima", year: 2024, odometer: 42_610, status: .active, vehicleType: .truck, assignedAt: .now.addingTimeInterval(-86_400 * 48)),
+        Vehicle(name: "Atlas 12", registration: "MH 12 AB 4821", make: "Tata", model: "Prima", year: 2024, odometer: 42_610, status: .active, vehicleType: .truck, assignedAt: .now.addingTimeInterval(-86_400 * 24)),
         Vehicle(name: "Orion 07", registration: "KA 01 MX 2084", make: "Ashok Leyland", model: "AVTR", year: 2023, odometer: 78_240, status: .attention, vehicleType: .truck, assignedAt: .now.addingTimeInterval(-86_400 * 120)),
         Vehicle(name: "Nova 19", registration: "DL 01 RT 9033", make: "Mahindra", model: "Furio", year: 2025, odometer: 16_090, status: .scheduled, vehicleType: .van, assignedAt: .now.addingTimeInterval(-86_400 * 10))
     ]
@@ -58,4 +58,28 @@ enum SampleData {
         InventoryPart(id: "GEN-6004", name: "Hoses", category: .generalMaintenance, currentQuantity: 9, minimumQuantity: 8, maximumQuantity: 42, reorderThreshold: 10, monthlyConsumption: 10, previousMonthUsage: 9, lastUpdated: .now.addingTimeInterval(-86_400 * 5)),
         InventoryPart(id: "GEN-6005", name: "Clamps", category: .generalMaintenance, currentQuantity: 46, minimumQuantity: 24, maximumQuantity: 120, reorderThreshold: 30, monthlyConsumption: 24, previousMonthUsage: 27, lastUpdated: .now.addingTimeInterval(-86_400 * 1))
     ]
+    
+    static let maintenanceHistory: [MaintenanceRecord] = [
+        MaintenanceRecord(
+            title: "Oil Change",
+            date: "12 Jun 2026"
+        ),
+
+        MaintenanceRecord(
+            title: "Brake Inspection",
+            date: "01 Jun 2026"
+        ),
+
+        MaintenanceRecord(
+            title: "Tyre Replacement",
+            date: "20 May 2026"
+        ),
+
+        MaintenanceRecord(
+            title: "Battery Check",
+            date: "05 May 2026"
+        )
+    ]
 }
+
+

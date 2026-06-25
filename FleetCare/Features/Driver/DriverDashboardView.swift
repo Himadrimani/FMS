@@ -7,22 +7,18 @@
 import SwiftUI
 import UIKit
 
-enum InspectionStatus { case pending, inProgress, passed }
 
 struct DriverDashboardView: View {
-    let driverName: String
     let vehicle: Vehicle
     let trip: FleetTrip
-    var inspectionStatus: InspectionStatus = .pending
 
     @State private var showingInspection = false
 
-    var body: some View {
-        VStack(spacing: 0) {
-            topBar
+        var body: some View {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    greeting
+                VStack(alignment: .leading, spacing: 12) {
+                    topBar
+                    //greeting
                     vehicleCard
                     tripCard
                     inspectionCard
@@ -30,26 +26,31 @@ struct DriverDashboardView: View {
                 }
                 .padding(16)
             }
+            .background(Color(.systemGroupedBackground))
+            .toolbar(.hidden, for: .navigationBar)
+            .fullScreenCover(isPresented: $showingInspection) {
+                InspectionView()
+            }
         }
-        .background(Color(.systemGroupedBackground))
-        .toolbar(.hidden, for: .navigationBar)
-//        .fullScreenCover(isPresented: $showingInspection) {
-//            NavigationStack{
-//                DetailedInspectionView()
-//            }
-//        }
-    }
+    
 
     private var topBar: some View {
         HStack {
-            
-            Text("FleetSync").font(.title3.bold())
+
+            Text("FleetSync")
+                .font(.title2.weight(.bold))
+
             Spacer()
+
             Image(systemName: "bell")
                 .font(.title3)
                 .overlay(alignment: .topTrailing) {
-                    Circle().fill(.red).frame(width: 8, height: 8).offset(x: 2, y: -2)
+                    Circle()
+                        .fill(.red)
+                        .frame(width: 8, height: 8)
+                        .offset(x: 2, y: -2)
                 }
+
             NavigationLink {
                 AccountView()
             } label: {
@@ -57,134 +58,175 @@ struct DriverDashboardView: View {
                     .font(.largeTitle)
                     .foregroundStyle(.blue)
                     .overlay(alignment: .bottomTrailing) {
-                        Circle().fill(.green).frame(width: 14, height: 14).overlay(
-                        Circle().stroke(Color(.systemBackground), lineWidth: 2))
+                        Circle()
+                            .fill(.green)
+                            .frame(width: 14, height: 14)
+                            .overlay {
+                                Circle()
+                                    .stroke(Color(.systemBackground), lineWidth: 2)
+                            }
                     }
             }
             .accessibilityLabel("Account")
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(.systemBackground))
+        .padding(.leading, 8)
+        .padding(.trailing, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
     }
 
-    private var greeting: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Good morning,").foregroundStyle(.secondary)
-                Text(driverName).font(.largeTitle.bold())
-            }
-        }
-    }
+//    private var greeting: some View {
+//        HStack(alignment: .top) {
+//            VStack(alignment: .leading, spacing: 2) {
+//                Text("Good morning,").foregroundStyle(.secondary)
+//                Text(driverName).font(.title.bold())
+//            }
+//        }
+//    }
 
     private var vehicleCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("VEHICLE ASSIGNMENT")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 8) {
 
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "car.fill")
-                    .foregroundStyle(.blue)
-                    .frame(width: 52, height: 52)
-                    .background(Color.blue.opacity(0.12), in: Circle())
+            Text("Vehicle Assigned")
+                .font(.title3.weight(.bold))
+                .foregroundStyle(.primary)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(vehicle.registration).font(.title3.bold())
-                    Text("\(vehicle.make) \(vehicle.model)").foregroundStyle(.secondary)
-                    StatusPill(text: vehicle.status.rawValue, color: vehicle.status.tint)
-                }
-                Spacer()
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "car.fill")
+                        .foregroundStyle(.blue)
+                        .frame(width: 52, height: 52)
+                        .background(Color.blue.opacity(0.12), in: Circle())
 
-                VehicleImageView(vehicle: vehicle)
-                    .frame(width: 110, height: 70)
-            }
-
-            Divider()
-
-            HStack {
-                Label {
-                    HStack(spacing: 0) {
-                        Text("Assigned on ").foregroundStyle(.secondary)
-                        Text(dateFormatter.string(from: vehicle.assignedAt)).bold()
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(vehicle.registration)
+                            .font(.headline.weight(.semibold))
+                            .lineLimit(1)
+                        Text("\(vehicle.make) \(vehicle.model)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        StatusPill(text: vehicle.status.rawValue, color: vehicle.status.tint)
                     }
-                } icon: {
-                    Image(systemName: "calendar").foregroundStyle(.secondary)
+                    Spacer()
+
+                    VehicleImageView(vehicle: vehicle)
+                        .frame(width: 110, height: 70)
                 }
-                .font(.subheadline)
-                Spacer()
-                Button { } label: {
-                    HStack(spacing: 2) {
-                        Text("View Details").fontWeight(.semibold)
-                        Image(systemName: "chevron.right")
+
+                Divider()
+
+                HStack {
+                    Text("Assigned on \(dateFormatter.string(from: vehicle.assignedAt))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    NavigationLink {
+                        DriverVehicleDetailView(vehicle: vehicle)
+                    } label: {
+                        HStack(spacing: 2) {
+                            Text("View Details").fontWeight(.semibold)
+                            Image(systemName: "chevron.right")
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(.blue)
                     }
                 }
-                .font(.subheadline)
             }
+            .cardStyle()
         }
-        .cardStyle()
     }
 
     private var tripCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("UPCOMING TRIP")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text(trip.reference).font(.subheadline.weight(.semibold))
+        VStack(alignment: .leading, spacing: 8) {
+
+            Text("Upcoming Trip")
+                .font(.title3.weight(.bold))
+                .foregroundStyle(.primary)
+
+            VStack(alignment: .leading, spacing: 16) {
+
+                // TRP reference — top left
+                Text(trip.reference)
+                    .font(.headline.weight(.semibold))
                     .foregroundStyle(.blue)
-            }
 
-            HStack(alignment: .top, spacing: 12) {
-                VStack(spacing: 0) {
-                    Circle().stroke(Color.blue, lineWidth: 3).frame(width: 16, height: 16)
-                    Rectangle().fill(.clear).frame(width: 2, height: 34)
-                        .overlay(
-                            Line().stroke(style: StrokeStyle(lineWidth: 2, dash: [4, 4]))
-                                .foregroundStyle(.secondary.opacity(0.5))
-                        )
-                    Image(systemName: "mappin.circle.fill")
-                        .foregroundStyle(.red).font(.title3)
-                }
-                .padding(.top, 2)
+                HStack(alignment: .top, spacing: 14) {
 
-                VStack(alignment: .leading, spacing: 18) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Departure").font(.subheadline).foregroundStyle(.secondary)
-                        Text(trip.origin).font(.title3.weight(.semibold))
+                    // Timeline + stops
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack(alignment: .top, spacing: 14) {
+                            VStack(spacing: 4) {
+                                Circle()
+                                    .stroke(.blue, lineWidth: 3)
+                                    .frame(width: 16, height: 16)
+                                Line()
+                                    .stroke(style: StrokeStyle(lineWidth: 2, dash: [3, 3]))
+                                    .foregroundStyle(.secondary.opacity(0.6))
+                                    .frame(width: 2, height: 48)
+                            }
+                            .frame(width: 16)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Departure")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                Text(trip.origin)
+                                    .font(.title3.weight(.semibold))
+                            }
+                        }
+
+                        HStack(alignment: .top, spacing: 14) {
+                            Circle()
+                                .fill(.blue)
+                                .frame(width: 16, height: 16)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Destination")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                Text(trip.destination)
+                                    .font(.title3.weight(.semibold))
+                            }
+                        }
                     }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Destination").font(.subheadline).foregroundStyle(.secondary)
-                        Text(trip.destination).font(.title3.weight(.semibold))
+
+                    Spacer(minLength: 12)
+
+                    // Scheduled — vertically centered against the timeline span
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("Scheduled")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Text(timeFormatter.string(from: trip.scheduledAt))
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(.blue)
+                        Text(dateFormatter.string(from: trip.scheduledAt))
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                     }
+                    .frame(maxHeight: .infinity, alignment: .center)
                 }
 
-                Spacer()
+                Divider()
 
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("Scheduled").font(.subheadline).foregroundStyle(.secondary)
-                    Text(timeFormatter.string(from: trip.scheduledAt))
-                        .font(.title2.bold()).foregroundStyle(.blue)
-                    Text(dateFormatter.string(from: trip.scheduledAt))
-                        .font(.subheadline).foregroundStyle(.secondary)
-                }
-            }
-
-            Divider()
-
-            Button { } label: {
                 HStack {
-                    Text("View Trip Details").fontWeight(.semibold)
                     Spacer()
-                    Image(systemName: "chevron.right")
-                }
-                .foregroundStyle(.blue)
+                    NavigationLink {
+                                        TripDetailView(trip: trip)
+                                    } label: {
+                                        HStack(spacing: 2) {
+                                            Text("View Details").fontWeight(.semibold)
+                                            Image(systemName: "chevron.right")
+                                        }
+                                        .font(.subheadline)
+                                        .foregroundStyle(.blue)
+                                    }
+                                        }
             }
+            .cardStyle()
         }
-        .cardStyle()
     }
-
     private var inspectionCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("PRE-TRIP INSPECTION (MANDATORY)")
@@ -198,10 +240,13 @@ struct DriverDashboardView: View {
                     .background(Color.orange.opacity(0.15), in: Circle())
 
                 VStack(alignment: .leading, spacing: 4) {
-                    (Text("Status: ").foregroundStyle(.primary)
-                     + Text(statusText).foregroundStyle(statusColor).bold())
+                    Text("Status: Pending")
                         .font(.headline)
-                    
+                        .foregroundStyle(.orange)
+
+                    Text("Complete pre-trip inspection before starting your trip.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
             }
@@ -234,19 +279,7 @@ struct DriverDashboardView: View {
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.orange.opacity(0.25)))
     }
 
-    private var statusText: String {
-        switch inspectionStatus {
-        case .pending:    return "Pending"
-        case .inProgress: return "In progress"
-        case .passed:     return "Passed"
-        }
-    }
-    private var statusColor: Color {
-        switch inspectionStatus {
-        case .pending, .inProgress: return .orange
-        case .passed:               return .green
-        }
-    }
+
 
     private var quickActions: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -370,7 +403,6 @@ private let dateFormatter: DateFormatter = {
 #Preview {
     NavigationStack {
         DriverDashboardView(
-            driverName: "John Smith",
             vehicle: SampleData.vehicles[0],
             trip: SampleData.trips[0]
         )

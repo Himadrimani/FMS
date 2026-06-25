@@ -81,7 +81,11 @@ enum VehicleType: String, Codable, CaseIterable {
         }
     }
 }
-
+struct MaintenanceRecord: Identifiable {
+    let id = UUID()
+    let title: String
+    let date: String
+}
 @Model
 final class Vehicle {
     @Attribute(.unique) var id: UUID
