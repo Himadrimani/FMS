@@ -53,6 +53,7 @@ struct CameraPicker: UIViewControllerRepresentable {
 
 // MARK: - Main View Screen
 struct ReportDefectView: View {
+    @ObservedObject var vm: InspectionVM
     @Environment(\.dismiss) private var dismiss
     @State private var issueDescription: String = ""
     @State private var attachedImages: [UIImage] = []
@@ -195,6 +196,7 @@ struct ReportDefectView: View {
                     VStack(spacing: 14) {
                         Button(action: {
                             // Run actual reporting submission requests pipeline here
+                            vm.defectReports += 1
                             dismiss()
                         }) {
                             HStack(spacing: 8) {
@@ -236,7 +238,7 @@ struct ReportDefectView: View {
 struct ReportDefectView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            ReportDefectView()
+            ReportDefectView(vm: InspectionVM())
         }
     }
 }

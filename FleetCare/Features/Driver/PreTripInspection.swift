@@ -1,446 +1,651 @@
+//
+//  DetailedInspectionView.swift
+//  FleetCare
+//
+
 import SwiftUI
+import UIKit
 
-// MARK: - Inspection Item Status Enum
-enum InspectionItemStatus {
-    case unselected
-    case pass
-    case fail
-}
+// MARK: - Models
 
-// MARK: - Inspection Item Model
-struct DetailedInspectionItem: Identifiable {
+enum ItemInspectionStatus { case unselected, pass, fail }
+
+struct InspectionItem: Identifiable {
     let id = UUID()
     let title: String
-    let subtitle: String
     let iconName: String
-    var status: InspectionItemStatus = .unselected
+    let iconColor: Color
+    var status: ItemInspectionStatus = .unselected
     var failureDetails: String = ""
-    var attachedImage: UIImage? = nil // Stores captured photo
+    var attachedImages: [UIImage] = []
 }
 
-// MARK: - View Model
-class DetailedInspectionViewModel: ObservableObject {
-    @Published var items: [DetailedInspectionItem] = [
-        DetailedInspectionItem(title: "Brakes", subtitle: "", iconName: "arrow.clockwise.heart.fill"),
-        DetailedInspectionItem(title: "Tires", subtitle: "", iconName: "car.rear.and.tire.marks"),
-        DetailedInspectionItem(title: "Lights", subtitle: "", iconName: "sun.max.fill"),
-        DetailedInspectionItem(title: "Mirrors", subtitle: "", iconName: "eye.fill"),
-        DetailedInspectionItem(title: "Engine", subtitle: "", iconName: "wrench.and.screwdriver.fill"),
-        DetailedInspectionItem(title: "Fuel", subtitle: "", iconName: "fuelpump.fill")
-    ]
-    
-    @Published var generalNotes: String = ""
-    @Published var showCameraPicker: Bool = false
-    @Published var activeItemForPhoto: UUID? = nil
-    
-    var completedCount: Int {
-        items.filter { $0.status != .unselected }.count
-    }
-    
-    var totalCount: Int {
-        items.count
-    }
-    
-    var completionPercentage: Int {
-        totalCount > 0 ? (completedCount * 100) / totalCount : 0
-    }
+struct AvailableInspectionItem {
+    let title: String
+    let iconName: String
+    let iconColor: Color
+    var isDefault: Bool = true
 }
 
+let defaultInspectionItems: [AvailableInspectionItem] = [
+    .init(title: "Brakes",     iconName: "slider.horizontal.3",        iconColor: Color(hex: "3B5BDB")),
+    .init(title: "Tires",      iconName: "car.rear.and.tire.marks",    iconColor: Color(hex: "7048E8")),
+    .init(title: "Headlights", iconName: "lightbulb.fill",             iconColor: Color(hex: "E67700")),
+    .init(title: "Mirrors",    iconName: "rectangle.on.rectangle",     iconColor: Color(hex: "0C8599")),
+    .init(title: "Engine",     iconName: "wrench.and.screwdriver.fill",iconColor: Color(hex: "5C7CFA")),
+    .init(title: "Fuel",       iconName: "fuelpump.fill",              iconColor: Color(hex: "F59F00")),
+]
+
+let otherInspectionItems: [AvailableInspectionItem] = [
+    .init(title: "Tail Lights", iconName: "light.beacon.max.fill",  iconColor: Color(hex: "C92A2A"), isDefault: false),
+    .init(title: "Indicators",  iconName: "arrow.turn.up.right",    iconColor: Color(hex: "2F9E44"), isDefault: false),
+    .init(title: "Windshield",  iconName: "car.window.right",       iconColor: Color(hex: "1098AD"), isDefault: false),
+    .init(title: "Horn",        iconName: "speaker.wave.2.fill",    iconColor: Color(hex: "AE3EC9"), isDefault: false),
+    .init(title: "Wipers",      iconName: "wiper.and.drop.fill",    iconColor: Color(hex: "2F9E44"), isDefault: false),
+    .init(title: "Seatbelts",   iconName: "seatbelt",               iconColor: Color(hex: "E67700"), isDefault: false),
+]
+
+let allAvailableItems = defaultInspectionItems + otherInspectionItems
+
+// MARK: - ViewModel
+
+//class InspectionVM: ObservableObject {
+//    @Published var items: [InspectionItem] = []
+//    @Published var activeIndex: Int = 0
+//    @Published var showSheet = false
+//    @Published var showCamera = false
+//    @Published var cameraTargetID: UUID? = nil
+//
+//    var completed: Int { items.filter { $0.status != .unselected }.count }
+//    var total: Int { items.count }
+//    var fraction: Double { total > 0 ? Double(completed) / Double(total) : 0 }
+//    var percent: Int { Int(fraction * 100) }
+//
+//    func isAdded(_ title: String) -> Bool { items.contains { $0.title == title } }
+//
+//    func add(_ a: AvailableInspectionItem) {
+//        guard !isAdded(a.title) else { return }
+//        items.append(InspectionItem(title: a.title, iconName: a.iconName, iconColor: a.iconColor))
+//    }
+//}
+class InspectionVM: ObservableObject {
+    @Published var items: [InspectionItem]
+    @Published var activeIndex: Int = 0
+    @Published var showSheet = false
+    @Published var showCamera = false
+    @Published var cameraTargetID: UUID? = nil
+    @Published var defectReports: Int = 0          // ← counts submitted defect reports
+    @Published var navigateToSummary = false        // ← triggers Summary navigation
+
+    init() {
+        // Pre-load all 6 defaults on launch
+        items = defaultInspectionItems.map {
+            InspectionItem(title: $0.title, iconName: $0.iconName, iconColor: $0.iconColor)
+        }
+    }
+
+    var completed: Int { items.filter { $0.status != .unselected }.count }
+    var total: Int { items.count }
+    var fraction: Double { total > 0 ? Double(completed) / Double(total) : 0 }
+    var percent: Int { Int(fraction * 100) }
+
+    func isAdded(_ title: String) -> Bool { items.contains { $0.title == title } }
+
+    func add(_ a: AvailableInspectionItem) {
+        guard !isAdded(a.title) else { return }
+        items.append(InspectionItem(title: a.title, iconName: a.iconName, iconColor: a.iconColor))
+    }
+}
 // MARK: - Main View
-struct DetailedInspectionView: View {
-    @StateObject private var viewModel = DetailedInspectionViewModel()
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            // 1. Vehicle Info Top Header Card
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 16) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.blue.opacity(0.05))
-                            .frame(width: 48, height: 48)
-                        Image(systemName: "box.truck.fill")
-                            .foregroundColor(.blue)
-                            .font(.title3)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Vehicle #8824")
-                            .font(.headline)
-                            .bold()
-                        Text("Volvo VNL 860 • 2024 Model")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 6, height: 6)
-                            Text("Active Inspection")
-                                .font(.caption)
-                                .foregroundColor(.green)
-                                .bold()
-                        }
-                        .padding(.top, 2)
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.systemBackground))
-                .cornerRadius(16)
-                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
-                
-                // Progress Tracker Section
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("CURRENT PROGRESS")
-                        .font(.caption2)
-                        .bold()
-                        .foregroundColor(.secondary)
-                    
-                    HStack {
-                        HStack(alignment: .bottom, spacing: 4) {
-                            Text("\(viewModel.completedCount)")
-                                .font(.title3)
-                                .bold()
-                            Text("of \(viewModel.totalCount) items")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        Text("\(viewModel.completionPercentage)% Complete")
-                            .font(.caption)
-                            .bold()
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.blue.opacity(0.1))
-                            .foregroundColor(.blue)
-                            .cornerRadius(6)
-                    }
-                    
-                    ProgressView(value: Double(viewModel.completedCount), total: Double(viewModel.totalCount))
-                        .tint(.blue)
-                        .scaleEffect(x: 1, y: 1.5, anchor: .center)
-                }
-                .padding(.horizontal, 4)
-            }
-            .padding()
-            .background(Color(.systemGroupedBackground).opacity(0.4))
-            
-            // 2. Scrollable Dynamic Checklist Form
-            ScrollView {
-                VStack(spacing: 14) {
-                    ForEach($viewModel.items) { $item in
-                        InspectionCardView(item: $item, onPhotoTap: {
-                            viewModel.activeItemForPhoto = item.id
-                            viewModel.showCameraPicker = true
-                        })
-                    }
-                    
-                    // Report Defect (Other than above) Section
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Report Defect (Other than above)")
-                            .font(.caption)
-                            .bold()
-                            .foregroundColor(.secondary)
-                        
-                        Button(action: {
-                            // Logic to add an extra custom defect item dynamically
-                        }) {
-                            // Locate this inside your Checklist Form area:
-                            NavigationLink(destination: ReportDefectView()) {
-                                HStack {
-                                    Image(systemName: "plus")
-                                    Text("Report Defect")
-                                }
-                                .font(.subheadline)
-                                .bold()
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .foregroundColor(.blue) // Ensure button label text renders blue
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.blue, style: StrokeStyle(lineWidth: 1, dash: [4]))
-                                )
-                            }
-                        }
-                    }
-                    .padding(.top, 8)
-                    
-                    // Notes & Exceptions Bottom Input
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("NOTES / EXCEPTIONS")
-                            .font(.caption)
-                            .bold()
-                            .foregroundColor(.secondary)
-                        
-                        TextEditor(text: $viewModel.generalNotes)
-                            .frame(height: 80)
-                            .padding(8)
-                            .background(Color(.systemBackground))
-                            .cornerRadius(10)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color(.systemGray4), lineWidth: 0.8)
-                            )
-                    }
-                }
-                .padding()
-            }
-            .background(Color(.systemGroupedBackground).opacity(0.6))
-            
-            // 3. Final Submission Action Panel
-            VStack(spacing: 10) {
-                Button(action: {
-                    // Action for final completion routing
-                }) {
-                    HStack {
-                        Text("Submit Inspection")
-                        Image(systemName: "paperplane.fill")
-                    }
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(12)
-                }
-            }
-            .padding()
-            .background(Color(.systemBackground))
-            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: -2)
-        }
-        .navigationTitle("Inspection")
-        .navigationBarTitleDisplayMode(.inline)
-        // Camera sheet sheet binder fallback structure
-        .sheet(isPresented: $viewModel.showCameraPicker) {
-            ImagePickerFallback(selectedImage: Binding(
-                get: {
-                    viewModel.items.first(where: { $0.id == viewModel.activeItemForPhoto })?.attachedImage
-                },
-                set: { newImg in
-                    if let idx = viewModel.items.firstIndex(where: { $0.id == viewModel.activeItemForPhoto }) {
-                        viewModel.items[idx].attachedImage = newImg
-                    }
-                }
-            ))
-        }
-    }
-}
 
-// MARK: - Context-Aware Interactive Card Components
-struct InspectionCardView: View {
-    @Binding var item: DetailedInspectionItem
-    var onPhotoTap: () -> Void
+struct DetailedInspectionView: View {
+    @StateObject private var vm = InspectionVM()
+    @Environment(\.dismiss) private var dismiss
+    var onDone: () -> Void = {}
+
+//    var body: some View {
+//        ZStack(alignment: .bottom) {
+//            Color(.systemGroupedBackground).ignoresSafeArea()
+//
+//            VStack(spacing: 0) {
+//                // Page header
+//                VStack(alignment: .leading, spacing: 4) {
+//                    Text("Pre-Trip Inspection")
+//                        .font(.title.bold())
+//                }
+//                .frame(maxWidth: .infinity, alignment: .leading)
+//                .padding(20)
+//                .background(Color(.systemGroupedBackground))
+//
+//                ScrollView(showsIndicators: false) {
+//                    VStack(alignment: .leading, spacing: 20) {
+//
+//                        // Checklist header
+//                        HStack {
+//                            Text("Inspection Checklist").font(.title2.bold())
+//                            Spacer()
+//                            Button { vm.showSheet = true } label: {
+//                                Image(systemName: "plus")
+//                                    .font(.title3.weight(.semibold))
+//                                    .foregroundStyle(.white)
+//                                    .frame(width: 40, height: 40)
+//                                    .background(Color.blue, in: Circle())
+//                            }
+//                        }
+//
+//                        // Item cards
+//                        if vm.items.isEmpty {
+//                            emptyState
+//                        } else {
+//                            ForEach(vm.items.indices, id: \.self) { idx in
+//                                InspectionItemCard(item: $vm.items[idx], onCameraTap: {
+//                                    vm.cameraTargetID = vm.items[idx].id
+//                                    vm.showCamera = true
+//                                })
+//                            }
+//                        }
+//
+//                        // Summary table
+//                        if vm.items.contains(where: { $0.status != .unselected }) {
+//                            summaryTable
+//                        }
+//
+//                        // Report Defect
+//                        NavigationLink(destination: ReportDefectView()) {
+//                            Label("Report Defect", systemImage: "exclamationmark.triangle.fill")
+//                                .font(.subheadline.weight(.semibold))
+//                                .foregroundStyle(.orange)
+//                                .frame(maxWidth: .infinity)
+//                                .padding(.vertical, 14)
+//                                .background(Color.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+//                                .overlay(RoundedRectangle(cornerRadius: 12)
+//                                    .stroke(Color.orange.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [5])))
+//                        }
+//
+//                        Spacer(minLength: 100)
+//                    }
+//                    .padding(.horizontal, 20)
+//                    .padding(.top, 8)
+//                }
+//            }
+//
+//            // Bottom submit bar
+//            VStack(spacing: 0) {
+//                Button {
+//                    // submit logic
+//                } label: {
+//                    Text("Submit Inspection")
+//                        .font(.headline).foregroundStyle(.white)
+//                        .frame(maxWidth: .infinity).padding(.vertical, 16)
+//                        .background(
+//                            vm.completed == vm.total && vm.total > 0 ? Color.blue : Color.blue.opacity(0.35),
+//                            in: RoundedRectangle(cornerRadius: 14))
+//                }
+//                .disabled(vm.completed != vm.total || vm.total == 0)
+//            }
+//            .padding(.horizontal, 20).padding(.vertical, 14)
+//            .background(Color(.systemBackground).shadow(color: .black.opacity(0.07), radius: 8, x: 0, y: -3))
+//        }
+//        .navigationBarBackButtonHidden(true)
+//        .navigationTitle("").navigationBarTitleDisplayMode(.inline)
+//        .toolbar {
+//            ToolbarItem(placement: .navigationBarLeading) {
+//                Button { dismiss() } label: {
+//                    HStack(spacing: 4) {
+//                        Image(systemName: "chevron.left").fontWeight(.semibold)
+//                        Text("Back")
+//                    }.foregroundStyle(.blue)
+//                }
+//            }
+//
+//        }
+//        .sheet(isPresented: $vm.showSheet) { AddItemSheet(vm: vm) }
+//        .sheet(isPresented: $vm.showCamera) {
+//            if let idx = vm.items.firstIndex(where: { $0.id == vm.cameraTargetID }) {
+//                CameraPickerBridge(images: $vm.items[idx].attachedImages)
+//            }
+//        }
+//    }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Main Top Title/Control Header Block
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(item.status == .fail ? Color.red.opacity(0.05) : Color.blue.opacity(0.05))
-                        .frame(width: 42, height: 42)
-                    Image(systemName: item.iconName)
-                        .foregroundColor(item.status == .fail ? .red : .blue)
-                        .font(.system(size: 18))
+        ZStack(alignment: .bottom) {
+            Color(.systemGroupedBackground).ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Page header
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Pre-Trip Inspection")
+                        .font(.title.bold())
                 }
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(item.title)
-                        .font(.body)
-                        .bold()
-                    Text(item.subtitle)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                if item.status == .fail {
-                    HStack(spacing: 4) {
-                        Circle().fill(Color.red).frame(width: 6, height: 6)
-                        Text("Failed")
-                            .font(.caption)
-                            .bold()
-                            .foregroundColor(.red)
-                    }
-                }
-                
-                Image(systemName: item.status == .fail ? "chevron.up" : "chevron.right")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-            
-            // Pass/Fail Selector Button Controls
-            HStack(spacing: 12) {
-                // Pass Button Setup
-                Button(action: {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
-                        item.status = .pass
-                    }
-                }) {
-                    Text("Pass")
-                        .font(.subheadline)
-                        .bold()
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(item.status == .pass ? Color.blue.opacity(0.08) : Color.clear)
-                        .foregroundColor(item.status == .pass ? .blue : .primary)
-                        .cornerRadius(8)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(item.status == .pass ? Color.blue : Color(.systemGray4), lineWidth: 1)
-                        )
-                }
-                
-                // Fail Button Setup
-                Button(action: {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
-                        item.status = .fail
-                    }
-                }) {
-                    Text("Fail")
-                        .font(.subheadline)
-                        .bold()
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(item.status == .fail ? Color.red : Color.clear)
-                        .foregroundColor(item.status == .fail ? .white : .red)
-                        .cornerRadius(8)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.red, lineWidth: 1)
-                        )
-                }
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 16)
-            
-            // Dynamic Defect Form Section Expansion Block
-            if item.status == .fail {
-                VStack(alignment: .leading, spacing: 12) {
-                    Divider()
-                        .padding(.horizontal)
-                    
-                    // Failure Context Form Box
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Failure Details")
-                            .font(.caption)
-                            .bold()
-                            .foregroundColor(.secondary)
-                        
-                        TextField("Describe the issue...", text: $item.failureDetails, axis: .vertical)
-                            .lineLimit(3...5)
-                            .padding(10)
-                            .background(Color(.systemGroupedBackground).opacity(0.5))
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color(.systemGray4), lineWidth: 0.6)
-                            )
-                        
-                        HStack {
-                            Spacer()
-                            Text("\(item.failureDetails.count)/250")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
+                .background(Color(.systemGroupedBackground))
+
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 20) {
+
+                        // Checklist header — no + button anymore
+                        Text("Inspection Checklist").font(.title2.bold())
+
+                        // Item cards (always has items since defaults are pre-loaded)
+                        ForEach(vm.items.indices, id: \.self) { idx in
+                            InspectionItemCard(item: $vm.items[idx], onCameraTap: {
+                                vm.cameraTargetID = vm.items[idx].id
+                                vm.showCamera = true
+                            })
                         }
-                    }
-                    .padding(.horizontal)
-                    
-                    // Camera Capture Frame View Layer
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Upload Photo (Optional)")
-                            .font(.caption)
-                            .bold()
-                            .foregroundColor(.secondary)
+
+                        // "Add More Items" button — replaces the old + in header
+                        Button { vm.showSheet = true } label: {
+                            Label("Add More Items", systemImage: "plus.circle.fill")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.blue)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+                                .overlay(RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.blue.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [5])))
+                        }
+
+                        // Summary table (shown once any item is checked)
+//                        if vm.items.contains(where: { $0.status != .unselected }) {
+//                            summaryTable
+//                        }
+
+                        // Report Defect row — shows badge if reports submitted
                         
-                        Button(action: {
-                            onPhotoTap()
-                        }) {
-                            VStack(spacing: 8) {
-                                if let img = item.attachedImage {
-                                    Image(uiImage: img)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(height: 120)
-                                        .cornerRadius(8)
-                                        .clipped()
-                                } else {
-                                    Image(systemName: "camera")
-                                        .font(.title2)
-                                        .foregroundColor(.secondary)
-                                    
-                                    VStack(spacing: 2) {
-                                        Text("Tap to capture or upload")
-                                            .font(.footnote)
-                                            .foregroundColor(.primary)
-                                        Text("JPG, PNG up to 10MB")
-                                            .font(.caption2)
-                                            .foregroundColor(.secondary)
-                                    }
+                        NavigationLink(destination: ReportDefectView(vm: vm)) {
+                            HStack {
+                                Label("Report Defect", systemImage: "exclamationmark.triangle.fill")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.orange)
+                                Spacer()
+                                if vm.defectReports > 0 {
+                                    Text("\(vm.defectReports) reported")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 9).padding(.vertical, 4)
+                                        .background(Color.orange, in: Capsule())
                                 }
                             }
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 20)
-                            .background(Color(.systemGroupedBackground).opacity(0.3))
-                            .cornerRadius(8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color(.systemGray3), style: StrokeStyle(lineWidth: 1, dash: [3]))
-                            )
+                            .padding(.vertical, 14)
+                            .padding(.horizontal, 16)
+                            .background(Color.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.orange.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [5])))
+                        }
+
+                        Spacer(minLength: 100)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                }
+            }
+
+            // Bottom submit bar
+            VStack(spacing: 0) {
+                // Hidden NavigationLink driven by vm.navigateToSummary
+                NavigationLink(
+                    destination: InspectionSummaryView(vm: vm, onDone: onDone),  // ← pass it
+                    isActive: $vm.navigateToSummary
+                ) { EmptyView() }
+                Button {
+                    vm.navigateToSummary = true
+                } label: {
+                    Text("Submit Inspection")
+                        .font(.headline).foregroundStyle(.white)
+                        .frame(maxWidth: .infinity).padding(.vertical, 16)
+                        .background(
+                            vm.completed == vm.total && vm.total > 0 ? Color.blue : Color.blue.opacity(0.35),
+                            in: RoundedRectangle(cornerRadius: 14))
+                }
+                .disabled(vm.completed != vm.total || vm.total == 0)
+            }
+            .padding(.horizontal, 20).padding(.vertical, 14)
+            .background(Color(.systemBackground).shadow(color: .black.opacity(0.07), radius: 8, x: 0, y: -3))
+        }
+        .navigationBarBackButtonHidden(true)
+        .navigationTitle("").navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { dismiss() } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left").fontWeight(.semibold)
+                        Text("Back")
+                    }.foregroundStyle(.blue)
+                }
+            }
+        }
+        .sheet(isPresented: $vm.showSheet) { AddItemSheet(vm: vm) }
+        .sheet(isPresented: $vm.showCamera) {
+            if let idx = vm.items.firstIndex(where: { $0.id == vm.cameraTargetID }) {
+                CameraPickerBridge(images: $vm.items[idx].attachedImages)
+            }
+        }
+    }
+
+    // MARK: Empty state
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "checklist").font(.system(size: 40)).foregroundStyle(.blue.opacity(0.35))
+            Text("No items added yet").font(.headline).foregroundStyle(.secondary)
+            Text("Tap + to build your checklist.").font(.subheadline).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity).padding(40)
+        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    // MARK: Summary table
+//    private var summaryTable: some View {
+//        VStack(alignment: .leading, spacing: 0) {
+//            Text("Inspection Summary").font(.title2.bold()).padding(.bottom, 12)
+//
+//            // Header row
+//            HStack {
+//                Text("ITEM NAME").frame(maxWidth: .infinity, alignment: .leading)
+//                Text("STATUS").frame(width: 88, alignment: .center)
+//                Text("ACTION").frame(width: 54, alignment: .trailing)
+//            }
+//            .font(.caption.weight(.bold)).foregroundStyle(.secondary)
+//            .padding(.horizontal, 14).padding(.vertical, 9)
+//            .background(Color(.systemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+//
+//            let checked = vm.items.filter { $0.status != .unselected }
+//            VStack(spacing: 0) {
+//                ForEach(checked) { item in
+//                    HStack {
+//                        Text(item.title).frame(maxWidth: .infinity, alignment: .leading)
+//
+//                        HStack(spacing: 4) {
+//                            Circle().fill(item.status == .pass ? Color.green : Color.red)
+//                                .frame(width: 7, height: 7)
+//                            Text(item.status == .pass ? "Passed" : "Failed")
+//                                .font(.caption.weight(.semibold))
+//                                .foregroundStyle(item.status == .pass ? .green : .red)
+//                        }
+//                        .padding(.horizontal, 8).padding(.vertical, 5)
+//                        .background((item.status == .pass ? Color.green : Color.red).opacity(0.12), in: Capsule())
+//                        .frame(width: 88)
+//
+//                        Button("View") {
+//                            if let idx = vm.items.firstIndex(where: { $0.id == item.id }) {
+//                                vm.activeIndex = idx
+//                            }
+//                        }
+//                        .font(.subheadline.weight(.semibold)).foregroundStyle(.blue)
+//                        .frame(width: 54, alignment: .trailing)
+//                    }
+//                    .padding(.horizontal, 14).padding(.vertical, 13)
+//                    .background(Color(.systemBackground))
+//
+//                    if item.id != checked.last?.id { Divider().padding(.leading, 14) }
+//                }
+//            }
+//            .clipShape(RoundedRectangle(cornerRadius: 12))
+//            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(.systemGray5), lineWidth: 1))
+//        }
+//    }
+}
+
+// MARK: - Inspection Item Card
+
+struct InspectionItemCard: View {
+    @Binding var item: InspectionItem
+    var onCameraTap: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Title row
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(item.iconColor.opacity(0.13))
+                        .frame(width: 46, height: 46)
+                    Image(systemName: item.iconName)
+                        .font(.body)
+                        .foregroundStyle(item.iconColor)
+                        .frame(width: 24, height: 24)   // ← add this — constrains icon size
+                }
+                Text(item.title).font(.headline)
+                Spacer()
+
+                HStack(spacing: 8) {
+                    passBtn
+                    failBtn
+                }
+                .fixedSize()                            // ← add this — prevents vertical stretching
+            }
+            .padding(16)
+            .frame(minHeight: 78)                      
+            // Fail expansion
+            if item.status == .fail {
+                Divider().padding(.horizontal, 12)
+                failSection
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: item.status)
+    }
+
+    // Pass button — green when selected
+    private var passBtn: some View {
+        Button {
+            withAnimation { item.status = item.status == .pass ? .unselected : .pass }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: item.status == .pass ? "checkmark.circle.fill" : "checkmark.circle")
+                Text("Pass").fontWeight(.semibold)
+            }
+            .font(.subheadline)
+            .foregroundStyle(item.status == .pass ? .white : Color.green)
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .background(item.status == .pass ? Color.green : Color.green.opacity(0.10), in: Capsule())
+            .overlay(Capsule().stroke(Color.green.opacity(item.status == .pass ? 0 : 0.5), lineWidth: 1))
+        }
+    }
+    private var failBtn: some View {
+        Button {
+            withAnimation { item.status = item.status == .fail ? .unselected : .fail }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: item.status == .fail ? "exclamationmark.circle.fill" : "exclamationmark.circle")
+                Text("Fail").fontWeight(.semibold)
+            }
+            .font(.subheadline)
+            .foregroundStyle(item.status == .fail ? .white : Color.red)
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .background(item.status == .fail ? Color.red : Color.red.opacity(0.08), in: Capsule())
+            .overlay(Capsule().stroke(Color.red.opacity(item.status == .fail ? 0 : 0.5), lineWidth: 1))
+        }
+    }
+
+    private var failSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Remarks
+            VStack(alignment: .leading, spacing: 5) {
+                Text("REMARKS").font(.caption.weight(.bold)).foregroundStyle(.secondary)
+                TextField("Describe the issue...", text: $item.failureDetails, axis: .vertical)
+                    .lineLimit(3...5).padding(10)
+                    .background(Color(.systemGroupedBackground), in: RoundedRectangle(cornerRadius: 9))
+                    .overlay(RoundedRectangle(cornerRadius: 9).stroke(Color(.systemGray4), lineWidth: 0.8))
+            }
+
+            // Photos
+            VStack(alignment: .leading, spacing: 6) {
+                Text("EVIDENCE PHOTOS").font(.caption.weight(.bold)).foregroundStyle(.secondary)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(item.attachedImages.indices, id: \.self) { i in
+                            ZStack(alignment: .topTrailing) {
+                                Image(uiImage: item.attachedImages[i])
+                                    .resizable().scaledToFill()
+                                    .frame(width: 76, height: 76)
+                                    .clipShape(RoundedRectangle(cornerRadius: 9))
+                                Button { item.attachedImages.remove(at: i) } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.black)
+                                        .background(Circle().fill(.white))
+                                }.offset(x: 3, y: -3)
+                            }.padding(.top, 3)
+                        }
+                        Button(action: onCameraTap) {
+                            VStack(spacing: 5) {
+                                Image(systemName: "camera.badge.plus").font(.title3).foregroundStyle(.blue)
+                                Text("Add Photo").font(.caption2).foregroundStyle(.blue)
+                            }
+                            .frame(width: 76, height: 76)
+                            .background(Color(.systemGroupedBackground), in: RoundedRectangle(cornerRadius: 9))
+                            .overlay(RoundedRectangle(cornerRadius: 9)
+                                .stroke(Color.blue.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [4])))
                         }
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom, 16)
                 }
-                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .background(Color(.systemBackground))
-        .cornerRadius(14)
-        .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
+        .padding(14)
     }
 }
 
-// MARK: - Dummy Image Picker Wrapper
-struct ImagePickerFallback: View {
-    @Binding var selectedImage: UIImage?
-    @Environment(\.dismiss) var dismiss
+// MARK: - Add Item Sheet (sections: Default / Other, multi-add, search)
+
+struct AddItemSheet: View {
+    @ObservedObject var vm: InspectionVM
+    @Environment(\.dismiss) private var dismiss
+    @State private var search = ""
+
+//    var filtered: (defaults: [AvailableInspectionItem], others: [AvailableInspectionItem]) {
+//        let q = search.trimmingCharacters(in: .whitespaces)
+//        let all = q.isEmpty ? allAvailableItems : allAvailableItems.filter { $0.title.localizedCaseInsensitiveContains(q) }
+//        return (all.filter { $0.isDefault }, all.filter { !$0.isDefault })
+//    }
+    var filtered: (defaults: [AvailableInspectionItem], others: [AvailableInspectionItem]) {
+        let q = search.trimmingCharacters(in: .whitespaces)
+        // Only show otherInspectionItems — defaults are already on the main screen
+        let pool = q.isEmpty ? otherInspectionItems : otherInspectionItems.filter {
+            $0.title.localizedCaseInsensitiveContains(q)
+        }
+        return ([], pool)   // defaults bucket always empty now
+    }
+//    var body: some View {
+//        NavigationStack {
+//            List {
+//                if !filtered.defaults.isEmpty {
+//                    Section("Default") { rows(filtered.defaults) }
+//                }
+//                if !filtered.others.isEmpty {
+//                    Section("Other") { rows(filtered.others) }
+//                }
+//            }
+//            .listStyle(.insetGrouped)
+//            .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always),
+//                        prompt: "Search items")
+//            .navigationTitle("Add Inspection Item")
+//            .navigationBarTitleDisplayMode(.inline)
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarTrailing) {
+//                    Button("Done") { dismiss() }.fontWeight(.semibold)
+//                }
+//            }
+//        }
+//    }
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Camera Simulator")
-                .font(.headline)
-            Text("In a real device context, this modal interfaces with UIImagePickerController native platform views.")
-                .font(.subheadline)
-                .multilineTextAlignment(.center)
-                .padding()
-            
-            Button("Simulate Photo Capture") {
-                // Return a simple system shape asset as captured payload
-                selectedImage = UIImage(systemName: "exclamationmark.triangle.fill")
-                dismiss()
+        NavigationStack {
+            List {
+                // No "Default" section anymore
+                if !filtered.others.isEmpty {
+                    Section("Additional Items") { rows(filtered.others) }
+                } else {
+                    Section {
+                        Text("No items found").foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding()
+                    }
+                }
             }
-            .buttonStyle(.borderedProminent)
-            
-            Button("Cancel") {
-                dismiss()
+            .listStyle(.insetGrouped)
+            .searchable(text: $search,
+                        placement: .navigationBarDrawer(displayMode: .always),
+                        prompt: "Search items")
+            .navigationTitle("Add More Items")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }.fontWeight(.semibold)
+                }
             }
         }
-        .padding()
+    }
+
+    @ViewBuilder
+    private func rows(_ items: [AvailableInspectionItem]) -> some View {
+        ForEach(items, id: \.title) { a in
+            let added = vm.isAdded(a.title)
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(added ? Color(.systemGray4) : a.iconColor)
+                        .frame(width: 36, height: 36)
+                    Image(systemName: a.iconName).foregroundStyle(.white).font(.system(size: 15))
+                }
+                Text(a.title).foregroundStyle(added ? .secondary : .primary)
+                Spacer()
+                if added {
+                    Text("Added").font(.caption.weight(.medium)).foregroundStyle(.secondary)
+                        .padding(.horizontal, 9).padding(.vertical, 4)
+                        .background(Color(.systemGray5), in: Capsule())
+                } else {
+                    Button {
+                        vm.add(a)
+                        // sheet stays open so driver can keep adding
+                    } label: {
+                        Text("Add").font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                            .padding(.horizontal, 14).padding(.vertical, 6)
+                            .background(Color.blue, in: Capsule())
+                    }.buttonStyle(.plain)
+                }
+            }
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+        }
     }
 }
 
-// MARK: - Live Preview Component
-struct DetailedInspectionView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            DetailedInspectionView()
+// MARK: - Supporting views
+
+
+
+struct CameraPickerBridge: UIViewControllerRepresentable {
+    @Binding var images: [UIImage]
+    @Environment(\.dismiss) private var dismiss
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let p = UIImagePickerController()
+        p.delegate = context.coordinator
+        p.sourceType = UIImagePickerController.isSourceTypeAvailable(.camera) ? .camera : .photoLibrary
+        return p
+    }
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+        let parent: CameraPickerBridge
+        init(_ parent: CameraPickerBridge) { self.parent = parent }
+        func imagePickerController(_ picker: UIImagePickerController,
+                                   didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            if let img = info[.originalImage] as? UIImage { parent.images.append(img) }
+            parent.dismiss()
         }
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) { parent.dismiss() }
     }
 }
+
+extension Color {
+    init(hex: String) {
+        let h = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var n: UInt64 = 0; Scanner(string: h).scanHexInt64(&n)
+        self.init(red: Double((n>>16)&0xFF)/255, green: Double((n>>8)&0xFF)/255, blue: Double(n&0xFF)/255)
+    }
+}
+
+#Preview { NavigationStack { DetailedInspectionView() } }

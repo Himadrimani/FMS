@@ -33,9 +33,11 @@ struct DriverDashboardView: View {
         }
         .background(Color(.systemGroupedBackground))
         .toolbar(.hidden, for: .navigationBar)
-        .fullScreenCover(isPresented: $showingInspection) {
-            InspectionView()
-        }
+//        .fullScreenCover(isPresented: $showingInspection) {
+//            NavigationStack{
+//                DetailedInspectionView()
+//            }
+//        }
     }
 
     private var topBar: some View {
@@ -196,20 +198,18 @@ struct DriverDashboardView: View {
                     .background(Color.orange.opacity(0.15), in: Circle())
 
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 0) {
-                        Text("Status: ").foregroundStyle(.primary)
-                        Text(statusText).foregroundStyle(statusColor).bold()
-                    }
-                    .font(.headline)
-                    Text("Complete pre-trip inspection before starting your trip.")
-                        .font(.subheadline).foregroundStyle(.secondary)
+                    (Text("Status: ").foregroundStyle(.primary)
+                     + Text(statusText).foregroundStyle(statusColor).bold())
+                        .font(.headline)
+                    
                 }
                 Spacer(minLength: 8)
             }
-
-            Button {
-                showingInspection = true
-            } label: {
+            NavigationLink(destination: DetailedInspectionView(onDone: {
+                showingInspection = false           // ← not actually needed for NavigationLink
+                // NavigationLink handles its own stack, so just dismiss is enough:
+            }),
+                           isActive: $showingInspection) {
                 HStack {
                     Text("Start Inspection").fontWeight(.semibold)
                     Image(systemName: "chevron.right")
