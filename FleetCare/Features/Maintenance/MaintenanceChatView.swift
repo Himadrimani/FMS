@@ -303,3 +303,7 @@ private struct ChatBubble: View {
         MaintenanceChatDetailView(channel: .fleetManager)
     }
 }
+
+
+
+

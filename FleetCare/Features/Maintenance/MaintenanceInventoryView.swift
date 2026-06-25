@@ -46,10 +46,10 @@ struct MaintenanceInventoryView: View {
 
     private var categoryHeader: some View {
         VStack(alignment: .leading, spacing: FleetSpacing.xSmall) {
-            Text("Category")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .textCase(.uppercase)
+//            Text("Category")
+//                .font(.footnote.weight(.semibold))
+//                .foregroundStyle(.secondary)
+//                .textCase(.uppercase)
 
             Text(viewModel.selectedCategory.rawValue)
                 .font(.title3.bold())
@@ -136,42 +136,35 @@ private struct InventoryPartCard: View {
     let part: InventoryPart
     let action: () -> Void
 
+    private var unitsColor: Color {
+        switch part.stockStatus {
+        case .healthy:
+            return .green
+        case .lowStock:
+            return .orange
+        case .outOfStock:
+            return .red
+        }
+    }
+
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: FleetSpacing.medium) {
-                HStack(alignment: .top, spacing: FleetSpacing.medium) {
-                    VStack(alignment: .leading, spacing: FleetSpacing.xSmall) {
-                        Text(part.name)
-                            .font(.headline)
-                            .foregroundStyle(.primary)
-                            .lineLimit(2)
+            HStack(alignment: .firstTextBaseline, spacing: FleetSpacing.large) {
+                Text(part.name)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
 
-                        Text(part.id)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
+                Spacer(minLength: FleetSpacing.medium)
 
-                    Spacer(minLength: FleetSpacing.medium)
-
-                    InventoryStatusBadge(status: part.stockStatus)
-                }
-
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Current Stock")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
-                    Spacer()
-
-                    Text("\(part.currentQuantity) Units")
-                        .font(.title3.bold())
-                        .foregroundStyle(.primary)
-                        .contentTransition(.numericText())
-                }
-
-                Text("Last Updated \(part.lastUpdated.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text("\(part.currentQuantity) Units")
+                    .font(.headline.weight(.medium))
+                    .foregroundStyle(unitsColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+                    .multilineTextAlignment(.trailing)
+                    .contentTransition(.numericText())
             }
             .padding(FleetSpacing.large)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -184,7 +177,7 @@ private struct InventoryPartCard: View {
         }
         .buttonStyle(InventoryPressButtonStyle())
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(part.name), part ID \(part.id), current stock \(part.currentQuantity) units, \(part.stockStatus.rawValue), last updated \(part.lastUpdated.formatted(date: .abbreviated, time: .omitted))")
+        .accessibilityLabel("\(part.name), \(part.currentQuantity) units available")
         .accessibilityHint("Opens part details")
     }
 }
@@ -239,18 +232,11 @@ private struct InventoryPartDetailSheet: View {
 
     private var sheetHeader: some View {
         VStack(alignment: .leading, spacing: FleetSpacing.medium) {
-            HStack(alignment: .top, spacing: FleetSpacing.medium) {
-                Text(part.name)
-                    .font(.largeTitle.bold())
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.82)
-
-                Spacer(minLength: FleetSpacing.medium)
-
-                InventoryStatusBadge(status: part.stockStatus)
-                    .padding(.top, FleetSpacing.small)
-            }
+            Text(part.name)
+                .font(.largeTitle.bold())
+                .foregroundStyle(.primary)
+                .lineLimit(2)
+                .minimumScaleFactor(0.82)
 
             VStack(alignment: .leading, spacing: FleetSpacing.xSmall) {
                 DetailLine(title: "Part ID", value: part.id)
@@ -346,7 +332,7 @@ private struct InventoryStatusBadge: View {
             .foregroundStyle(color)
             .padding(.horizontal, FleetSpacing.medium)
             .padding(.vertical, FleetSpacing.small)
-            .background(color.opacity(0.12), in: Capsule())
+            .background(color.opacity(0.15), in: Capsule())
             .contentTransition(.opacity)
             .accessibilityLabel("Status \(status.rawValue)")
     }
