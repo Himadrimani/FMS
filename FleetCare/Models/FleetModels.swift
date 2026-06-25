@@ -9,6 +9,36 @@ enum FleetStatus: String, Codable, CaseIterable {
     case offline = "Offline"
 }
 
+// NEW: drives which photo/icon the dashboard shows for a vehicle.
+// Add image sets named vehicle_truck / vehicle_van / vehicle_car /
+// vehicle_2wheeler in Assets.xcassets and they're used automatically.
+enum VehicleType: String, Codable, CaseIterable {
+    case truck, van, car, twoWheeler, bus, auto
+
+    var assetName: String {
+        switch self {
+        case .truck:      return "vehicle_truck"
+        case .van:        return "vehicle_van"
+        case .car:        return "vehicle_car"
+        case .twoWheeler: return "vehicle_2wheeler"
+        case .bus:        return "vehicle_bus"
+        case .auto:       return "vehicle_auto"
+        }
+    }
+
+    // SF Symbol fallback. Verify names in the SF Symbols app.
+    var symbolName: String {
+        switch self {
+        case .truck:      return "truck.box.fill"
+        case .van:        return "box.truck.fill"
+        case .car:        return "car.fill"
+        case .twoWheeler: return "scooter"
+        case .bus:        return "bus.fill"
+        case .auto:       return "car.fill"
+        }
+    }
+}
+
 @Model
 final class Vehicle {
     @Attribute(.unique) var id: UUID
@@ -20,6 +50,12 @@ final class Vehicle {
     var odometer: Double
     var statusRaw: String
 
+    // NEW fields. Property-level defaults keep existing stores migrating
+    // cleanly and existing call sites compiling.
+    var vehicleTypeRaw: String = VehicleType.truck.rawValue
+    var assignedAt: Date = Date.now
+    var imageURLString: String? = nil
+
     init(
         id: UUID = UUID(),
         name: String,
@@ -28,7 +64,10 @@ final class Vehicle {
         model: String,
         year: Int,
         odometer: Double,
-        status: FleetStatus
+        status: FleetStatus,
+        vehicleType: VehicleType = .truck,
+        assignedAt: Date = .now,
+        imageURLString: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -38,11 +77,24 @@ final class Vehicle {
         self.year = year
         self.odometer = odometer
         self.statusRaw = status.rawValue
+        self.vehicleTypeRaw = vehicleType.rawValue
+        self.assignedAt = assignedAt
+        self.imageURLString = imageURLString
     }
 
     var status: FleetStatus {
         get { FleetStatus(rawValue: statusRaw) ?? .offline }
         set { statusRaw = newValue.rawValue }
+    }
+
+    var vehicleType: VehicleType {
+        get { VehicleType(rawValue: vehicleTypeRaw) ?? .truck }
+        set { vehicleTypeRaw = newValue.rawValue }
+    }
+
+    var imageURL: URL? {
+        guard let imageURLString else { return nil }
+        return URL(string: imageURLString)
     }
 }
 
@@ -50,6 +102,7 @@ final class Vehicle {
 final class FleetTrip {
     @Attribute(.unique) var id: UUID
     var title: String
+    var reference: String = ""          // NEW: "TRP-101"
     var origin: String
     var destination: String
     var scheduledAt: Date
@@ -59,6 +112,7 @@ final class FleetTrip {
     init(
         id: UUID = UUID(),
         title: String,
+        reference: String = "",
         origin: String,
         destination: String,
         scheduledAt: Date,
@@ -67,6 +121,7 @@ final class FleetTrip {
     ) {
         self.id = id
         self.title = title
+        self.reference = reference
         self.origin = origin
         self.destination = destination
         self.scheduledAt = scheduledAt

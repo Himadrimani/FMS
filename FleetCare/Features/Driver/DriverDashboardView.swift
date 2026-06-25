@@ -1,0 +1,374 @@
+//
+//  DriverDashboardView.swift
+//  FleetCare
+//
+//  Created by Purvanshi on 24/06/26.
+//
+import SwiftUI
+import UIKit
+
+enum InspectionStatus { case pending, inProgress, passed }
+
+struct DriverDashboardView: View {
+    let driverName: String
+    let vehicle: Vehicle
+    let trip: FleetTrip
+    var inspectionStatus: InspectionStatus = .pending
+
+    @State private var showingInspection = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            topBar
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    greeting
+                    vehicleCard
+                    tripCard
+                    inspectionCard
+                    quickActions
+                }
+                .padding(16)
+            }
+        }
+        .background(Color(.systemGroupedBackground))
+        .toolbar(.hidden, for: .navigationBar)
+        .fullScreenCover(isPresented: $showingInspection) {
+            InspectionView()
+        }
+    }
+
+    private var topBar: some View {
+        HStack {
+            
+            Text("FleetSync").font(.title3.bold())
+            Spacer()
+            Image(systemName: "bell")
+                .font(.title3)
+                .overlay(alignment: .topTrailing) {
+                    Circle().fill(.red).frame(width: 8, height: 8).offset(x: 2, y: -2)
+                }
+            NavigationLink {
+                AccountView()
+            } label: {
+                Image(systemName: "person.crop.circle.fill")
+                    .font(.largeTitle)
+                    .foregroundStyle(.blue)
+                    .overlay(alignment: .bottomTrailing) {
+                        Circle().fill(.green).frame(width: 14, height: 14).overlay(
+                        Circle().stroke(Color(.systemBackground), lineWidth: 2))
+                    }
+            }
+            .accessibilityLabel("Account")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(.systemBackground))
+    }
+
+    private var greeting: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Good morning,").foregroundStyle(.secondary)
+                Text(driverName).font(.largeTitle.bold())
+            }
+        }
+    }
+
+    private var vehicleCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("VEHICLE ASSIGNMENT")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "car.fill")
+                    .foregroundStyle(.blue)
+                    .frame(width: 52, height: 52)
+                    .background(Color.blue.opacity(0.12), in: Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(vehicle.registration).font(.title3.bold())
+                    Text("\(vehicle.make) \(vehicle.model)").foregroundStyle(.secondary)
+                    StatusPill(text: vehicle.status.rawValue, color: vehicle.status.tint)
+                }
+                Spacer()
+
+                VehicleImageView(vehicle: vehicle)
+                    .frame(width: 110, height: 70)
+            }
+
+            Divider()
+
+            HStack {
+                Label {
+                    Text("Assigned on ").foregroundStyle(.secondary)
+                    + Text(dateFormatter.string(from: vehicle.assignedAt)).bold()
+                } icon: {
+                    Image(systemName: "calendar").foregroundStyle(.secondary)
+                }
+                .font(.subheadline)
+                Spacer()
+                Button { } label: {
+                    HStack(spacing: 2) {
+                        Text("View Details").fontWeight(.semibold)
+                        Image(systemName: "chevron.right")
+                    }
+                }
+                .font(.subheadline)
+            }
+        }
+        .cardStyle()
+    }
+
+    private var tripCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("UPCOMING TRIP")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(trip.reference).font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.blue)
+            }
+
+            HStack(alignment: .top, spacing: 12) {
+                VStack(spacing: 0) {
+                    Circle().stroke(Color.blue, lineWidth: 3).frame(width: 16, height: 16)
+                    Rectangle().fill(.clear).frame(width: 2, height: 34)
+                        .overlay(
+                            Line().stroke(style: StrokeStyle(lineWidth: 2, dash: [4, 4]))
+                                .foregroundStyle(.secondary.opacity(0.5))
+                        )
+                    Image(systemName: "mappin.circle.fill")
+                        .foregroundStyle(.red).font(.title3)
+                }
+                .padding(.top, 2)
+
+                VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Departure").font(.subheadline).foregroundStyle(.secondary)
+                        Text(trip.origin).font(.title3.weight(.semibold))
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Destination").font(.subheadline).foregroundStyle(.secondary)
+                        Text(trip.destination).font(.title3.weight(.semibold))
+                    }
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Scheduled").font(.subheadline).foregroundStyle(.secondary)
+                    Text(timeFormatter.string(from: trip.scheduledAt))
+                        .font(.title2.bold()).foregroundStyle(.blue)
+                    Text(dateFormatter.string(from: trip.scheduledAt))
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }
+            }
+
+            Divider()
+
+            Button { } label: {
+                HStack {
+                    Text("View Trip Details").fontWeight(.semibold)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                }
+                .foregroundStyle(.blue)
+            }
+        }
+        .cardStyle()
+    }
+
+    private var inspectionCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("PRE-TRIP INSPECTION (MANDATORY)")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.orange)
+
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "checklist")
+                    .foregroundStyle(.orange)
+                    .frame(width: 52, height: 52)
+                    .background(Color.orange.opacity(0.15), in: Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    (Text("Status: ").foregroundStyle(.primary)
+                     + Text(statusText).foregroundStyle(statusColor).bold())
+                        .font(.headline)
+                    Text("Complete pre-trip inspection before starting your trip.")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 8)
+            }
+
+            Button {
+                showingInspection = true
+            } label: {
+                HStack {
+                    Text("Start Inspection").fontWeight(.semibold)
+                    Image(systemName: "chevron.right")
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .foregroundStyle(.white)
+                .background(.orange, in: RoundedRectangle(cornerRadius: 12))
+            }
+
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "info.circle").foregroundStyle(.blue)
+                Text("You must complete the pre-trip inspection to start the trip.")
+                    .font(.subheadline).foregroundStyle(.blue)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.blue.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
+        }
+        .padding(16)
+        .background(Color.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.orange.opacity(0.25)))
+    }
+
+    private var statusText: String {
+        switch inspectionStatus {
+        case .pending:    return "Pending"
+        case .inProgress: return "In progress"
+        case .passed:     return "Passed"
+        }
+    }
+    private var statusColor: Color {
+        switch inspectionStatus {
+        case .pending, .inProgress: return .orange
+        case .passed:               return .green
+        }
+    }
+
+    private var quickActions: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("QUICK ACTIONS")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 12) {
+                QuickAction(title: "Messages") {
+                    Image(systemName: "message.fill")
+                        .foregroundStyle(.white)
+                        .frame(width: 40, height: 40)
+                        .background(.blue, in: Circle())
+                } action: { }
+
+                QuickAction(title: "Report Defect") {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.white)
+                        .frame(width: 40, height: 40)
+                        .background(.red, in: Circle())
+                } action: { }
+
+                QuickAction(title: "Resume Navigation") {
+                    Image(systemName: "location.fill")
+                        .foregroundStyle(.green)
+                        .frame(width: 40, height: 40)
+                        .background(Color.green.opacity(0.18), in: Circle())
+                } action: { }
+
+                QuickAction(title: "Emergency SOS") {
+                    Text("SOS")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                        .frame(width: 40, height: 40)
+                        .background(.red, in: Circle())
+                } action: { }
+            }
+        }
+        .padding(.top, 4)
+    }
+}
+
+private extension FleetStatus {
+    var tint: Color {
+        switch self {
+        case .active:    return .green
+        case .attention: return .orange
+        case .scheduled: return .blue
+        case .completed: return .gray
+        case .offline:   return .gray
+        }
+    }
+}
+
+private struct StatusPill: View {
+    let text: String
+    let color: Color
+    var body: some View {
+        HStack(spacing: 5) {
+            Circle().fill(color).frame(width: 7, height: 7)
+            Text(text)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(color)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(color.opacity(0.14), in: Capsule())
+    }
+}
+
+private struct CardBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground),
+                       in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+private extension View {
+    func cardStyle() -> some View { modifier(CardBackground()) }
+}
+
+private struct QuickAction<Icon: View>: View {
+    let title: String
+    @ViewBuilder let icon: () -> Icon
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                icon()
+                Text(title)
+                    .font(.caption)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(Color(.secondarySystemGroupedBackground),
+                       in: RoundedRectangle(cornerRadius: 12))
+        }
+    }
+}
+
+private struct Line: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        return p
+    }
+}
+
+private let timeFormatter: DateFormatter = {
+    let f = DateFormatter(); f.dateFormat = "hh:mm a"; return f
+}()
+private let dateFormatter: DateFormatter = {
+    let f = DateFormatter(); f.dateFormat = "dd MMM yyyy"; return f
+}()
+#Preview {
+    NavigationStack {
+        DriverDashboardView(
+            driverName: "John Smith",
+            vehicle: SampleData.vehicles[0],
+            trip: SampleData.trips[0]
+        )
+    }
+}

@@ -2,14 +2,14 @@ import Foundation
 
 enum SampleData {
     static let vehicles = [
-        Vehicle(name: "Atlas 12", registration: "MH 12 AB 4821", make: "Tata", model: "Prima", year: 2024, odometer: 42_610, status: .active),
-        Vehicle(name: "Orion 07", registration: "KA 01 MX 2084", make: "Ashok Leyland", model: "AVTR", year: 2023, odometer: 78_240, status: .attention),
-        Vehicle(name: "Nova 19", registration: "DL 01 RT 9033", make: "Mahindra", model: "Furio", year: 2025, odometer: 16_090, status: .scheduled)
+        Vehicle(name: "Atlas 12", registration: "MH 12 AB 4821", make: "Tata", model: "Prima", year: 2024, odometer: 42_610, status: .active, vehicleType: .truck, assignedAt: .now.addingTimeInterval(-86_400 * 48)),
+        Vehicle(name: "Orion 07", registration: "KA 01 MX 2084", make: "Ashok Leyland", model: "AVTR", year: 2023, odometer: 78_240, status: .attention, vehicleType: .truck, assignedAt: .now.addingTimeInterval(-86_400 * 120)),
+        Vehicle(name: "Nova 19", registration: "DL 01 RT 9033", make: "Mahindra", model: "Furio", year: 2025, odometer: 16_090, status: .scheduled, vehicleType: .van, assignedAt: .now.addingTimeInterval(-86_400 * 10))
     ]
 
     static let trips = [
-        FleetTrip(title: "Pune Distribution Run", origin: "Mumbai Hub", destination: "Pune DC", scheduledAt: .now.addingTimeInterval(3_600), status: .active, distanceKilometers: 151),
-        FleetTrip(title: "Airport Cold Chain", origin: "Bengaluru Depot", destination: "Kempegowda Airport", scheduledAt: .now.addingTimeInterval(10_800), status: .scheduled, distanceKilometers: 39)
+        FleetTrip(title: "Pune Distribution Run", reference: "TRP-101", origin: "Mumbai Hub", destination: "Pune DC", scheduledAt: .now.addingTimeInterval(3_600), status: .active, distanceKilometers: 151),
+        FleetTrip(title: "Airport Cold Chain", reference: "TRP-102", origin: "Bengaluru Depot", destination: "Kempegowda Airport", scheduledAt: .now.addingTimeInterval(10_800), status: .scheduled, distanceKilometers: 39)
     ]
 
     static let workOrders = [
