@@ -88,7 +88,9 @@ final class MaintenanceInventoryViewModel: ObservableObject {
     @Published private(set) var selectedCategory: InventoryCategory = .all
 
     let categories = InventoryCategory.allCases
-    private let parts = SampleData.inventoryParts
+    private var parts: [InventoryPart] {
+        SupabaseService.shared.inventoryParts
+    }
 
     var filteredParts: [InventoryPart] {
         guard selectedCategory != .all else { return parts }

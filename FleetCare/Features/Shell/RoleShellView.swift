@@ -30,16 +30,6 @@ struct AccountView: View {
     var body: some View {
         @Bindable var session = session
         Form {
-            Section("Workspace") {
-                Picker("Preview role", selection: $session.selectedRole) {
-                    ForEach(UserRole.allCases) { role in
-                        Label(role.rawValue, systemImage: role.symbol)
-                            .tag(role)
-                    }
-                }
-                Toggle("Simulate offline mode", isOn: $session.isOffline)
-            }
-
             Section("Security") {
                 Label("Passkey enabled", systemImage: "key.fill")
                 Label("Face ID enabled", systemImage: "faceid")

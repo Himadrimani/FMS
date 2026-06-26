@@ -196,6 +196,6 @@ private struct DetailLine: Shape {
 
 #Preview {
     NavigationStack {
-        TripDetailView(trip: SampleData.trips[0])
+        TripDetailView(trip: FleetTrip(title: "Demo Trip", origin: "Mumbai", destination: "Pune", scheduledAt: Date(), status: .active, distanceKilometers: 150.0))
     }
 }

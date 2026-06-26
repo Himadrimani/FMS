@@ -4,6 +4,8 @@ import SwiftUI
 
 struct MaintenanceTabView: View {
     @State private var selectedTab = 0
+    @StateObject private var supabase = SupabaseService.shared
+    @Environment(SessionStore.self) private var session
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -19,6 +21,13 @@ struct MaintenanceTabView: View {
             Tab("Chat", systemImage: "bubble.left.and.bubble.right.fill", value: 3) {
                 NavigationStack { MaintenanceChatView() }
             }
+        }
+        .task {
+            // Fetch vehicles first (needed to resolve vehicle names in work orders)
+            if supabase.vehicles.isEmpty { await supabase.fetchVehicles() }
+            // Fetch only work orders assigned to THIS technician
+            await supabase.fetchWorkOrders(forTechId: session.currentUserId)
+            if supabase.inventoryParts.isEmpty { await supabase.fetchInventory() }
         }
     }
 }
@@ -168,7 +177,7 @@ struct WorkOrderDetailView: View {
             order.technicianNotes = technicianNotes
             
             // Mock Vehicle Analytics Update
-            if let vehicle = SampleData.vehicles.first(where: { $0.name == order.vehicleName }) {
+            if let vehicle = SupabaseService.shared.vehicles.first(where: { $0.name == order.vehicleName }) {
                 vehicle.status = .active // Available
                 // Mock cost calc: $100/hr labor + flat $50 for parts
                 let laborCost = order.laborHours * 100.0

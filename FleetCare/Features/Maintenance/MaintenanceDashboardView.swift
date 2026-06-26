@@ -2,18 +2,19 @@ import SwiftUI
 
 struct MaintenanceDashboardView: View {
     @Binding var selectedTab: Int
+    @StateObject private var supabase = SupabaseService.shared
     
     private var totalWorkOrders: Int {
-        SampleData.workOrders.count
+        supabase.workOrders.count
     }
     
     private var completedWorkOrders: Int {
-        SampleData.workOrders.filter { $0.status == .completed }.count
+        supabase.workOrders.filter { $0.status == .completed }.count
     }
     
     private var recentWorkOrders: [WorkOrder] {
         // Just take first 3 for recent
-        Array(SampleData.workOrders.prefix(3))
+        Array(supabase.workOrders.prefix(3))
     }
     
     var body: some View {

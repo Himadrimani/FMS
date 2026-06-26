@@ -3,11 +3,12 @@ import SwiftUI
 // MARK: - Work Orders Tab
 
 struct MaintenanceWorkOrdersView: View {
+    @StateObject private var supabase = SupabaseService.shared
     @State private var selectedFilter: WorkOrderFilter = .pending
     @State private var searchText = ""
 
     private var filteredOrders: [WorkOrder] {
-        let orders = SampleData.workOrders
+        let orders = supabase.workOrders
         let byFilter: [WorkOrder]
         switch selectedFilter {
         case .pending:
@@ -72,7 +73,7 @@ struct MaintenanceWorkOrdersView: View {
 
     // MARK: - Urgent Banner
     private var urgentBanner: some View {
-        let count = SampleData.workOrders.filter { $0.status == .attention }.count
+        let count = supabase.workOrders.filter { $0.status == .attention }.count
         return Group {
             if count > 0 {
                 Button {

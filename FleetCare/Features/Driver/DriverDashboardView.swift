@@ -10,7 +10,7 @@ import UIKit
 
 struct DriverDashboardView: View {
     let vehicle: Vehicle
-    let trip: FleetTrip
+    let trips: [FleetTrip]
 
     @State private var showInspection = false
         var body: some View {
@@ -19,7 +19,7 @@ struct DriverDashboardView: View {
                     topBar
                     //greeting
                     vehicleCard
-                    tripCard
+                    tripsList
                     inspectionCard
                     quickActions
                 }
@@ -135,95 +135,123 @@ struct DriverDashboardView: View {
         }
     }
 
-    private var tripCard: some View {
+    private var tripsList: some View {
         VStack(alignment: .leading, spacing: 8) {
-
-            Text("Upcoming Trip")
+            Text("Upcoming Trips")
                 .font(.title3.weight(.bold))
                 .foregroundStyle(.primary)
 
-            VStack(alignment: .leading, spacing: 16) {
-
-                // TRP reference — top left
-                Text(trip.reference)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.blue)
-
-                HStack(alignment: .top, spacing: 14) {
-
-                    // Timeline + stops
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack(alignment: .top, spacing: 14) {
-                            VStack(spacing: 4) {
-                                Circle()
-                                    .stroke(.blue, lineWidth: 3)
-                                    .frame(width: 16, height: 16)
-                                Line()
-                                    .stroke(style: StrokeStyle(lineWidth: 2, dash: [3, 3]))
-                                    .foregroundStyle(.secondary.opacity(0.6))
-                                    .frame(width: 2, height: 48)
-                            }
-                            .frame(width: 16)
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Departure")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                Text(trip.origin)
-                                    .font(.title3.weight(.semibold))
-                            }
-                        }
-
-                        HStack(alignment: .top, spacing: 14) {
-                            Circle()
-                                .fill(.blue)
-                                .frame(width: 16, height: 16)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Destination")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                Text(trip.destination)
-                                    .font(.title3.weight(.semibold))
-                            }
-                        }
-                    }
-
-                    Spacer(minLength: 12)
-
-                    // Scheduled — vertically centered against the timeline span
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("Scheduled")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Text(timeFormatter.string(from: trip.scheduledAt))
-                            .font(.title3.weight(.bold))
-                            .foregroundStyle(.blue)
-                        Text(dateFormatter.string(from: trip.scheduledAt))
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                    .frame(maxHeight: .infinity, alignment: .center)
-                }
-
-                Divider()
-
-                HStack {
-                    Spacer()
-                    NavigationLink {
-                                        TripDetailView(trip: trip)
-                                    } label: {
-                                        HStack(spacing: 2) {
-                                            Text("View Details").fontWeight(.semibold)
-                                            Image(systemName: "chevron.right")
-                                        }
-                                        .font(.subheadline)
-                                        .foregroundStyle(.blue)
-                                    }
-                                        }
+            ForEach(trips.prefix(5)) { trip in
+                TripCardView(trip: trip)
             }
-            .cardStyle()
+            
+            if trips.count > 5 {
+                NavigationLink {
+                    DriverTripsView()
+                } label: {
+                    HStack {
+                        Text("See More Options")
+                            .fontWeight(.semibold)
+                        Image(systemName: "arrow.right")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .foregroundStyle(.blue)
+                    .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                }
+                .padding(.top, 4)
+            }
         }
     }
+}
+
+private struct TripCardView: View {
+    let trip: FleetTrip
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+
+            // TRP reference — top left
+            Text(trip.reference)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.blue)
+
+            HStack(alignment: .top, spacing: 14) {
+
+                // Timeline + stops
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .top, spacing: 14) {
+                        VStack(spacing: 4) {
+                            Circle()
+                                .stroke(.blue, lineWidth: 3)
+                                .frame(width: 16, height: 16)
+                            Line()
+                                .stroke(style: StrokeStyle(lineWidth: 2, dash: [3, 3]))
+                                .foregroundStyle(.secondary.opacity(0.6))
+                                .frame(width: 2, height: 48)
+                        }
+                        .frame(width: 16)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Departure")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Text(trip.origin)
+                                .font(.title3.weight(.semibold))
+                        }
+                    }
+
+                    HStack(alignment: .top, spacing: 14) {
+                        Circle()
+                            .fill(.blue)
+                            .frame(width: 16, height: 16)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Destination")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Text(trip.destination)
+                                .font(.title3.weight(.semibold))
+                        }
+                    }
+                }
+
+                Spacer(minLength: 12)
+
+                // Scheduled — vertically centered against the timeline span
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Scheduled")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text(timeFormatter.string(from: trip.scheduledAt))
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.blue)
+                    Text(dateFormatter.string(from: trip.scheduledAt))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxHeight: .infinity, alignment: .center)
+            }
+
+            Divider()
+
+            HStack {
+                Spacer()
+                NavigationLink {
+                    TripDetailView(trip: trip)
+                } label: {
+                    HStack(spacing: 2) {
+                        Text("View Details").fontWeight(.semibold)
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.blue)
+                }
+            }
+        }
+        .cardStyle()
+    }
+}
+
+extension DriverDashboardView {
     private var inspectionCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("PRE-TRIP INSPECTION (MANDATORY)")
@@ -399,8 +427,8 @@ private let dateFormatter: DateFormatter = {
 #Preview {
     NavigationStack {
         DriverDashboardView(
-            vehicle: SampleData.vehicles[0],
-            trip: SampleData.trips[0]
+            vehicle: Vehicle(name: "Demo Vehicle", registration: "MH01AB1234", make: "Toyota", model: "Hilux", year: 2024, odometer: 1000, status: .active, vehicleType: .truck),
+            trips: [FleetTrip(title: "Demo Trip", origin: "Mumbai", destination: "Pune", scheduledAt: Date(), status: .active, distanceKilometers: 150.0)]
         )
     }
 }

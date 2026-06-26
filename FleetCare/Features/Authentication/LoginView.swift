@@ -1,103 +1,167 @@
-import AuthenticationServices
 import SwiftUI
+import Supabase
+
+// DTO to decode the `users` table
+private struct UserDTO: Codable {
+    let id: UUID
+    let email: String
+    let role: String
+}
 
 struct LoginView: View {
     @Environment(SessionStore.self) private var session
-    @State private var email = "manager@fleetcare.example"
-    @State private var password = "password"
-    @State private var showingRecovery = false
+    @State private var email = ""
+    @State private var password = ""
+    @State private var isLoading = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: FleetSpacing.xLarge) {
-                    VStack(alignment: .leading, spacing: FleetSpacing.small) {
+                VStack(spacing: 44) {
+
+                    // ── Header ──
+                    VStack(spacing: 14) {
                         Image(systemName: "truck.box.fill")
-                            .font(.system(size: 48))
+                            .font(.system(size: 64))
                             .foregroundStyle(.brandPrimary)
                             .accessibilityHidden(true)
-                        Text("Welcome to FleetCare")
-                            .font(.largeTitle.bold())
-                        Text("Secure access to your fleet workspace.")
-                            .font(.body)
+
+                        Text("FleetCare")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+
+                        Text("Sign in to manage your fleet.")
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                    .padding(.top, 60)
 
-                    VStack(spacing: FleetSpacing.large) {
-                        TextField("Work email", text: $email)
-                            .textContentType(.username)
+                    // ── Error banner ──
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(.callout)
+                            .foregroundStyle(.red)
+                            .padding(12)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.red.opacity(0.08))
+                            .cornerRadius(10)
+                            .padding(.horizontal, 24)
+                    }
+
+                    // ── Fields ──
+                    VStack(spacing: 16) {
+                        TextField("Work Email", text: $email)
+                            .textContentType(.emailAddress)
                             .keyboardType(.emailAddress)
                             .textInputAutocapitalization(.never)
-                            .accessibilityLabel("Work email")
+                            .padding()
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(12)
+                            .disabled(isLoading)
+
                         SecureField("Password", text: $password)
                             .textContentType(.password)
-                            .accessibilityLabel("Password")
+                            .padding()
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .cornerRadius(12)
+                            .disabled(isLoading)
                     }
-                    .textFieldStyle(.roundedBorder)
+                    .padding(.horizontal, 24)
 
-                    Button("Sign In") {
-                        session.signIn()
+                    // ── Sign In button ──
+                    Button(action: signIn) {
+                        HStack(spacing: 8) {
+                            if isLoading {
+                                ProgressView()
+                                    .tint(.white)
+                            }
+                            Text(isLoading ? "Signing in…" : "Sign In")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            email.isEmpty || password.isEmpty || isLoading
+                                ? Color.brandPrimary.opacity(0.45)
+                                : Color.brandPrimary
+                        )
+                        .cornerRadius(12)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .frame(maxWidth: .infinity)
+                    .disabled(email.isEmpty || password.isEmpty || isLoading)
+                    .padding(.horizontal, 24)
 
-                    SignInWithAppleButton(.signIn) { _ in
-                    } onCompletion: { _ in
-                        session.signIn()
-                    }
-                    .signInWithAppleButtonStyle(.black)
-                    .frame(height: 50)
-                    .clipShape(.rect(cornerRadius: FleetRadius.control))
-                    .accessibilityHint("Signs in using your Apple Account or passkey")
-
-                    Button("Use Face ID") {
-                        session.signIn()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    .frame(maxWidth: .infinity)
-
-                    Button("Forgot password?") {
-                        showingRecovery = true
-                    }
-                    .frame(maxWidth: .infinity)
+                    Spacer(minLength: 60)
                 }
-                .padding(FleetSpacing.xLarge)
             }
             .background(Color.appBackground)
-            .sheet(isPresented: $showingRecovery) {
-                PasswordRecoveryView()
-            }
         }
     }
-}
 
-private struct PasswordRecoveryView: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var email = ""
+    // MARK: – Auth logic
+    private func signIn() {
+        isLoading = true
+        errorMessage = nil
 
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Work email", text: $email)
-                        .textContentType(.emailAddress)
-                } footer: {
-                    Text("We’ll send a one-time verification code. Codes expire after 10 minutes.")
+        Task {
+            do {
+                // 1. Authenticate with Supabase Auth
+                _ = try await SupabaseConfig.client.auth.signIn(
+                    email: email, password: password
+                )
+
+                // 2. Fetch the user's role from the `users` table
+                var role: UserRole? = nil
+                var dbUserId: UUID? = nil
+                do {
+                    let users: [UserDTO] = try await SupabaseConfig.client
+                        .from("users")
+                        .select("id, email, role")
+                        .eq("email", value: email.lowercased())
+                        .execute()
+                        .value
+
+                    if let user = users.first {
+                        dbUserId = user.id
+                        // Map DB enum → app enum
+                        switch user.role {
+                        case "FLEET_MANAGER": role = .fleetManager
+                        case "DRIVER":        role = .driver
+                        case "TECH":          role = .maintenance
+                        default:              role = .fleetManager
+                        }
+                    }
+                    if let role = role {
+                        print("✅ Fetched role: \(role.rawValue)")
+                    } else {
+                        print("⚠️ User found, but role was empty or invalid.")
+                    }
+                } catch {
+                    print("⚠️ Could not fetch role from users table: \(error)")
                 }
-            }
-            .navigationTitle("Reset Password")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+
+                // 3. Update session
+                await MainActor.run {
+                    if let validRole = role {
+                        session.selectedRole = validRole
+                        // Store the user's identity for per-user data filtering using the public users table ID
+                        session.currentUserId = dbUserId ?? SupabaseConfig.client.auth.currentUser?.id
+                        session.currentUserEmail = email.lowercased()
+                        session.signIn()
+                    } else {
+                        errorMessage = "No role assigned in 'users' table. Check database."
+                    }
+                    isLoading = false
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Send Code") { dismiss() }
-                        .disabled(email.isEmpty)
+                print("✅ Auth flow finished.")
+
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Invalid email or password."
+                    isLoading = false
                 }
+                print("❌ Login failed: \(error)")
             }
         }
-        .presentationDetents([.medium])
     }
 }

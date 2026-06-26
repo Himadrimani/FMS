@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4B66D6CF2FEDA2F2009B2AAF /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 4B66D6CE2FEDA2F2009B2AAF /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		100000000000000000000004 /* FleetCare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FleetCare.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4B66D6CF2FEDA2F2009B2AAF /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +38,7 @@
 			isa = PBXGroup;
 			children = (
 				100000000000000000000001 /* FleetCare */,
+				4B66D6CD2FEDA2F2009B2AAF /* Frameworks */,
 				100000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -43,6 +49,13 @@
 				100000000000000000000004 /* FleetCare.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		4B66D6CD2FEDA2F2009B2AAF /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -65,6 +78,7 @@
 			);
 			name = FleetCare;
 			packageProductDependencies = (
+				4B66D6CE2FEDA2F2009B2AAF /* Supabase */,
 			);
 			productName = FleetCare;
 			productReference = 100000000000000000000004 /* FleetCare.app */;
@@ -94,6 +108,9 @@
 			);
 			mainGroup = 100000000000000000000002;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4B66D6CA2FED9EA1009B2AAF /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 100000000000000000000003 /* Products */;
 			projectDirPath = "";
@@ -244,6 +261,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = BrandPrimary;
+				CODE_SIGN_ENTITLEMENTS = FleetCare/FleetCare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
@@ -282,6 +300,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = BrandPrimary;
+				CODE_SIGN_ENTITLEMENTS = FleetCare/FleetCare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
@@ -337,6 +356,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4B66D6CA2FED9EA1009B2AAF /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4B66D6CE2FEDA2F2009B2AAF /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4B66D6CA2FED9EA1009B2AAF /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 100000000000000000000010 /* Project object */;
 }

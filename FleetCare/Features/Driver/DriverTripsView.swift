@@ -8,8 +8,10 @@ import SwiftUI
 import UIKit
 
 struct DriverTripsView: View {
+    @StateObject private var supabase = SupabaseService.shared
+
     var body: some View {
-        List(SampleData.trips) { trip in
+        List(supabase.trips) { trip in
             NavigationLink {
                 TripDetailView(trip: trip)
             } label: {

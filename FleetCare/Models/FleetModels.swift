@@ -103,6 +103,7 @@ final class Vehicle {
     var assignedAt: Date = Date.now
     var imageURLString: String? = nil
     var totalCostOfOwnership: Double = 0.0
+    var dbVehicleClass: String = "HEAVY_TRUCK"
 
     init(
         id: UUID = UUID(),
@@ -129,6 +130,7 @@ final class Vehicle {
         self.assignedAt = assignedAt
         self.imageURLString = imageURLString
         self.totalCostOfOwnership = 0.0
+        self.dbVehicleClass = "HEAVY_TRUCK"
     }
 
     var status: FleetStatus {
@@ -157,6 +159,8 @@ final class FleetTrip {
     var scheduledAt: Date
     var statusRaw: String
     var distanceKilometers: Double
+    var driverId: UUID? = nil
+    var vehicleId: UUID? = nil
 
     init(
         id: UUID = UUID(),
@@ -166,7 +170,9 @@ final class FleetTrip {
         destination: String,
         scheduledAt: Date,
         status: FleetStatus,
-        distanceKilometers: Double
+        distanceKilometers: Double,
+        driverId: UUID? = nil,
+        vehicleId: UUID? = nil
     ) {
         self.id = id
         self.title = title
@@ -176,6 +182,8 @@ final class FleetTrip {
         self.scheduledAt = scheduledAt
         self.statusRaw = status.rawValue
         self.distanceKilometers = distanceKilometers
+        self.driverId = driverId
+        self.vehicleId = vehicleId
     }
 
     var status: FleetStatus {
@@ -197,6 +205,8 @@ final class WorkOrder {
     var laborHours: Double = 0.0
     var partsUsed: [String] = []
     var technicianNotes: String = ""
+    var techId: UUID? = nil
+    var vehicleId: UUID? = nil
 
     init(
         id: UUID = UUID(),
@@ -208,7 +218,9 @@ final class WorkOrder {
         isExternalRepair: Bool = false,
         laborHours: Double = 0.0,
         partsUsed: [String] = [],
-        technicianNotes: String = ""
+        technicianNotes: String = "",
+        techId: UUID? = nil,
+        vehicleId: UUID? = nil
     ) {
         self.id = id
         self.title = title
@@ -220,6 +232,8 @@ final class WorkOrder {
         self.laborHours = laborHours
         self.partsUsed = partsUsed
         self.technicianNotes = technicianNotes
+        self.techId = techId
+        self.vehicleId = vehicleId
     }
 
     var status: FleetStatus {

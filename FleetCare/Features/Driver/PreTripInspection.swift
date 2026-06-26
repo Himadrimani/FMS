@@ -154,11 +154,6 @@ struct DetailedInspectionView: View {
             
             // Bottom submit bar
             VStack(spacing: 0) {
-                // Hidden NavigationLink driven by vm.navigateToSummary
-                NavigationLink(
-                    destination: InspectionSummaryView(vm: vm, onDone: onDone),  // ← pass it
-                    isActive: $vm.navigateToSummary
-                ) { EmptyView() }
                 Button {
                     vm.navigateToSummary = true
                 } label: {
@@ -170,6 +165,9 @@ struct DetailedInspectionView: View {
                             in: RoundedRectangle(cornerRadius: 14))
                 }
                 .disabled(vm.completed != vm.total || vm.total == 0)
+            }
+            .navigationDestination(isPresented: $vm.navigateToSummary) {
+                InspectionSummaryView(vm: vm, onDone: onDone)
             }
             .padding(.horizontal, 20).padding(.vertical, 14)
             .background(Color(.systemBackground).shadow(color: .black.opacity(0.07), radius: 8, x: 0, y: -3))

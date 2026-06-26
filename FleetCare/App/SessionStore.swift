@@ -24,6 +24,8 @@ final class SessionStore {
     var isAuthenticated = false
     var selectedRole: UserRole = .fleetManager
     var isOffline = false
+    var currentUserId: UUID? = nil
+    var currentUserEmail: String? = nil
 
     func signIn() {
         isAuthenticated = true
@@ -31,5 +33,7 @@ final class SessionStore {
 
     func signOut() {
         isAuthenticated = false
+        currentUserId = nil
+        currentUserEmail = nil
     }
 }

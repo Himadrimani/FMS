@@ -25,112 +25,330 @@ struct ManagerTabView: View {
 }
 
 struct ManagerDashboardView: View {
-    private let utilization = [
-        TrendPoint(day: "Mon", value: 74), TrendPoint(day: "Tue", value: 81),
-        TrendPoint(day: "Wed", value: 78), TrendPoint(day: "Thu", value: 86),
-        TrendPoint(day: "Fri", value: 91), TrendPoint(day: "Sat", value: 69),
-        TrendPoint(day: "Sun", value: 72)
-    ]
+    @StateObject private var supabase = SupabaseService.shared
+    @State private var showAssignTripSheet = false
+    @State private var showCreateWorkOrderSheet = false
+
+    private var activeVehiclesCount: Int {
+        supabase.vehicles.filter { $0.status == .active }.count
+    }
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: FleetSpacing.xLarge) {
-                Text("Good morning")
-                    .font(.largeTitle.bold())
-                    .accessibilityAddTraits(.isHeader)
-
-                ScrollView(.horizontal) {
-                    HStack(spacing: FleetSpacing.medium) {
-                        MetricCard(title: "Vehicles active", value: "42", detail: "of 48 vehicles", symbol: "car.2.fill")
-                            .frame(width: 190)
-                        MetricCard(title: "On-time trips", value: "94%", detail: "Up 3% this week", symbol: "clock.badge.checkmark.fill", tint: .green)
-                            .frame(width: 190)
-                        MetricCard(title: "Needs attention", value: "3", detail: "1 high priority", symbol: "exclamationmark.triangle.fill", tint: .orange)
-                            .frame(width: 190)
-                    }
-                }
-                .scrollIndicators(.hidden)
-
-                VStack(alignment: .leading, spacing: FleetSpacing.large) {
-                    SectionHeader(title: "Fleet utilization")
-                    Chart(utilization) { point in
-                        LineMark(x: .value("Day", point.day), y: .value("Utilization", point.value))
-                            .foregroundStyle(.brandPrimary)
-                            .interpolationMethod(.catmullRom)
-                        AreaMark(x: .value("Day", point.day), y: .value("Utilization", point.value))
-                            .foregroundStyle(.linearGradient(colors: [.brandPrimary.opacity(0.25), .clear], startPoint: .top, endPoint: .bottom))
-                    }
-                    .frame(height: 180)
-                    .chartYScale(domain: 50...100)
-                    .accessibilityChartDescriptor(UtilizationChartDescriptor(points: utilization))
-                }
-                .fleetCard()
-
-                SectionHeader(title: "Priority")
-                InsightCard(
-                    title: "Brake system risk",
-                    summary: "Orion 07 shows a pattern consistent with accelerated front brake wear.",
-                    score: 87,
-                    recommendation: "Inspect within 24 hours"
-                )
-
-                SectionHeader(title: "Today’s operations")
-                ForEach(SampleData.trips) { trip in
-                    NavigationLink {
-                        TripDetailView(trip: trip)
-                    } label: {
-                        TripRow(trip: trip)
-                    }
-                    .buttonStyle(.plain)
-                }
+            VStack(alignment: .leading, spacing: 28) {
+                dashboardHeader
+                overviewSection
+                quickActionsSection
+                aiInsightsSection
+                recentActivitySection
             }
-            .padding(FleetSpacing.large)
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 40)
         }
-        .background(Color.appBackground)
-        .navigationTitle("Overview")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    AccountView()
-                } label: {
-                    Image(systemName: "person.crop.circle")
-                }
-                .accessibilityLabel("Account")
+        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+        .navigationBarHidden(true)
+        .task {
+            if supabase.vehicles.isEmpty { await supabase.fetchVehicles() }
+            if supabase.trips.isEmpty { await supabase.fetchTrips() }
+            if supabase.drivers.isEmpty { await supabase.fetchDrivers() }
+            if supabase.technicians.isEmpty { await supabase.fetchTechnicians() }
+        }
+        .sheet(isPresented: $showAssignTripSheet) {
+            AssignTripSheet(supabase: supabase)
+        }
+        .sheet(isPresented: $showCreateWorkOrderSheet) {
+            CreateWorkOrderSheet(supabase: supabase)
+        }
+    }
+
+    private var dashboardHeader: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Good Afternoon,")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text("Demo Manager")
+                    .font(.title2.bold())
             }
+            Spacer()
+            
+            HStack(spacing: 12) {
+                Button(action: {}) {
+                    Image(systemName: "bell.fill")
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                        .padding(10)
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .clipShape(Circle())
+                }
+                
+                Button(action: {}) {
+                    Text("DM")
+                        .font(.subheadline.bold())
+                        .foregroundColor(.white)
+                        .padding(10)
+                        .background(Color.blue)
+                        .clipShape(Circle())
+                }
+            }
+        }
+    }
+
+    private var overviewSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Overview")
+                .font(.title3.bold())
+            
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                NavigationLink(destination: FleetListView()) {
+                    OverviewCard(title: "Total Vehicles", value: "\(supabase.vehicles.count)", subtitle: "All vehicles in your fleet", iconName: "car.fill", iconColor: .blue, chevronColor: .blue)
+                }
+                .buttonStyle(.plain)
+                
+                NavigationLink(destination: FleetListView()) {
+                    OverviewCard(title: "Ready Vehicles", value: "\(activeVehiclesCount)", subtitle: "Vehicles ready to assign", iconName: "checkmark.circle.fill", iconColor: .green, chevronColor: .green)
+                }
+                .buttonStyle(.plain)
+                
+                NavigationLink(destination: FeatureCollectionView(title: "Drivers", role: .fleetManager)) {
+                    OverviewCard(title: "Drivers Online", value: "0", subtitle: "Active drivers right now", iconName: "person.2.fill", iconColor: .orange, chevronColor: .orange)
+                }
+                .buttonStyle(.plain)
+                
+                NavigationLink(destination: FleetMapView()) {
+                    OverviewCard(title: "Live Trips", value: "\(supabase.trips.filter { $0.status == .active }.count)", subtitle: "Trips in progress", iconName: "arrow.up.arrow.down", iconColor: .purple, chevronColor: .purple)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var quickActionsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Quick Actions")
+                .font(.title3.bold())
+            
+            HStack(spacing: 0) {
+                NavigationLink(destination: FeatureCollectionView(title: "Chat", role: .fleetManager)) {
+                    QuickActionButton(icon: "message.fill", title: "Chat")
+                }
+                .buttonStyle(.plain)
+                Spacer()
+                
+                NavigationLink(destination: FleetMapView()) {
+                    QuickActionButton(icon: "location.fill", title: "Tracking")
+                }
+                .buttonStyle(.plain)
+                Spacer()
+                
+                Button {
+                    showAssignTripSheet = true
+                } label: {
+                    QuickActionButton(icon: "person.badge.plus", title: "Assign Driver")
+                }
+                .buttonStyle(.plain)
+                Spacer()
+                
+                Button {
+                    showCreateWorkOrderSheet = true
+                } label: {
+                    QuickActionButton(icon: "wrench.and.screwdriver.fill", title: "Maintenance")
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var aiInsightsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("AI Insights")
+                .font(.title3.bold())
+            
+            VStack(spacing: 12) {
+                NavigationLink(destination: InsightsView()) {
+                    AIInsightRow(icon: "chart.line.uptrend.xyaxis", iconColor: .blue, title: "Predictive Maintenance Alert", badge: "SMART", badgeColor: .blue, subtitle: "Identify telemetry risks, vehicle alerts, and wear trends...")
+                }
+                .buttonStyle(.plain)
+                
+                NavigationLink(destination: InsightsView()) {
+                    AIInsightRow(icon: "box.truck.fill", iconColor: .blue, title: "AI Parts Demand Forecasting", badge: "PREDICT", badgeColor: .blue, subtitle: "Calculate upcoming parts consumption & reorder recommendations...")
+                }
+                .buttonStyle(.plain)
+                
+                NavigationLink(destination: InsightsView()) {
+                    AIInsightRow(icon: "fuelpump.fill", iconColor: .blue, title: "Fuel Insights & Optimization", badge: "OPTIMIZE", badgeColor: .blue, subtitle: "Uncover cost savings, efficiency grades, and consumption anomalies...")
+                }
+                .buttonStyle(.plain)
+                
+                NavigationLink(destination: InsightsView()) {
+                    AIInsightRow(icon: "doc.text.fill", iconColor: .blue, title: "AI Vehicle Health Analytics", badge: "HEALTH", badgeColor: .blue, subtitle: "Assess fleet vehicle health grades, issue flags and repair tasks...")
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var recentActivitySection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Recent Activity")
+                    .font(.title3.bold())
+                Spacer()
+                Button("See All") {}
+                    .font(.subheadline.bold())
+            }
+            
+            VStack(spacing: 12) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.largeTitle)
+                    .foregroundColor(Color(UIColor.tertiaryLabel))
+                    .padding(.bottom, 4)
+                
+                Text("No activity yet")
+                    .font(.headline)
+                
+                Text("Trips, alerts and maintenance events will appear here.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 40)
+            .padding(.horizontal, 20)
+            .background(Color(UIColor.systemBackground))
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 4)
         }
     }
 }
 
-private struct TrendPoint: Identifiable {
-    let id = UUID()
-    let day: String
-    let value: Double
+// MARK: - Dashboard UI Components
+
+private struct OverviewCard: View {
+    let title: String
+    let value: String
+    let subtitle: String
+    let iconName: String
+    let iconColor: Color
+    let chevronColor: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top) {
+                Image(systemName: iconName)
+                    .font(.body)
+                    .foregroundColor(iconColor)
+                    .frame(width: 36, height: 36)
+                    .background(iconColor.opacity(0.12))
+                    .clipShape(Circle())
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 12, weight: .semibold))
+                    Text(value)
+                        .font(.title.bold())
+                        .foregroundColor(iconColor)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.bold())
+                    .foregroundColor(chevronColor)
+                    .padding(.top, 4)
+            }
+            Text(subtitle)
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .padding(14)
+        .background(Color(UIColor.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
+    }
 }
 
-private struct UtilizationChartDescriptor: AXChartDescriptorRepresentable {
-    let points: [TrendPoint]
-
-    func makeChartDescriptor() -> AXChartDescriptor {
-        let xAxis = AXCategoricalDataAxisDescriptor(title: "Day", categoryOrder: points.map(\.day))
-        let yAxis = AXNumericDataAxisDescriptor(title: "Utilization percentage", range: 0...100, gridlinePositions: []) {
-            $0.formatted(.number) + " percent"
+private struct QuickActionButton: View {
+    let icon: String
+    let title: String
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(.blue)
+                .frame(width: 64, height: 64)
+                .background(Color.blue.opacity(0.1))
+                .cornerRadius(20)
+            
+            Text(title)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.primary)
         }
-        let series = AXDataSeriesDescriptor(
-            name: "Fleet utilization",
-            isContinuous: false,
-            dataPoints: points.map { .init(x: $0.day, y: $0.value) }
-        )
-        return AXChartDescriptor(title: "Fleet utilization this week", summary: "Utilization peaks on Friday.", xAxis: xAxis, yAxis: yAxis, series: [series])
+    }
+}
+
+private struct AIInsightRow: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let badge: String
+    let badgeColor: Color
+    let subtitle: String
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(iconColor)
+                .frame(width: 44, height: 44)
+                .background(iconColor.opacity(0.1))
+                .cornerRadius(12)
+            
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
+                    Text(title)
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .lineLimit(1)
+                    
+                    Text(badge)
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(badgeColor)
+                        .cornerRadius(6)
+                }
+                
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.caption.bold())
+                .foregroundColor(Color(UIColor.tertiaryLabel))
+                .padding(.top, 14)
+        }
+        .padding(16)
+        .background(Color(UIColor.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
     }
 }
 
 struct FleetListView: View {
+    @StateObject private var supabase = SupabaseService.shared
     @State private var query = ""
     @State private var selection: FleetStatus?
 
     private var filtered: [Vehicle] {
-        SampleData.vehicles.filter { vehicle in
+        supabase.vehicles.filter { vehicle in
             (query.isEmpty || vehicle.name.localizedStandardContains(query) || vehicle.registration.localizedStandardContains(query))
             && (selection == nil || vehicle.status == selection)
         }
@@ -149,11 +367,20 @@ struct FleetListView: View {
             }
 
             Section("Vehicles") {
-                ForEach(filtered) { vehicle in
-                    NavigationLink {
-                        VehicleDetailView(vehicle: vehicle)
-                    } label: {
-                        VehicleRow(vehicle: vehicle)
+                if supabase.isLoading {
+                    HStack {
+                        Spacer()
+                        ProgressView("Loading vehicles...")
+                            .padding()
+                        Spacer()
+                    }
+                } else {
+                    ForEach(filtered) { vehicle in
+                        NavigationLink {
+                            VehicleDetailView(vehicle: vehicle)
+                        } label: {
+                            VehicleRow(vehicle: vehicle)
+                        }
                     }
                 }
             }
@@ -161,8 +388,14 @@ struct FleetListView: View {
         .searchable(text: $query, prompt: "Vehicle or registration")
         .navigationTitle("Fleet")
         .overlay {
-            if filtered.isEmpty {
+            if !supabase.isLoading && filtered.isEmpty {
                 EmptyStateView(title: "No vehicles found", message: "Try another search or clear the status filter.", symbol: "car.2")
+            }
+        }
+        .task {
+            // Fetch real live data from Supabase!
+            if supabase.vehicles.isEmpty {
+                await supabase.fetchVehicles()
             }
         }
     }

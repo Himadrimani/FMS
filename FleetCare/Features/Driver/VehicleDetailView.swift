@@ -90,7 +90,7 @@ struct DriverVehicleDetailView: View {
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(.secondary)
 
-                    ForEach(SampleData.maintenanceHistory) { record in
+                    ForEach([MaintenanceRecord]()) { record in
                         MaintenanceRow(
                             title: record.title,
                             date: record.date
@@ -153,7 +153,7 @@ private let dateFormatter: DateFormatter = {
 #Preview {
     NavigationStack {
         DriverVehicleDetailView(
-            vehicle: SampleData.vehicles[0]
+            vehicle: Vehicle(name: "Demo Vehicle", registration: "MH01AB1234", make: "Toyota", model: "Hilux", year: 2024, odometer: 1000, status: .active, vehicleType: .truck)
         )
     }
 }
