@@ -9,7 +9,7 @@ struct FleetManagerTabView: View {
     var body: some View {
         TabView {
             Tab("Home", systemImage: "house.fill") {
-                NavigationStack { FleetManagerHomeView() }
+                NavigationStack { ManagerDashboardView() }
             }
             Tab("Vehicle", systemImage: "car.fill") {
                 NavigationStack { FleetManagerVehicleView() }
@@ -201,10 +201,10 @@ struct FleetManagerHomeView: View {
         .sheet(isPresented: $showingAddMaintenance)  { AddMaintenanceSheet() }
         .sheet(isPresented: $showingAddVehicle)      { AddVehicleSheet() }
         .sheet(isPresented: $showingAddTrip)         { AddTripSheet() }
-        .sheet(isPresented: $showingDriversList)     { DriversListSheet(drivers: supabase.drivers) }
+        .sheet(isPresented: $showingDriversList)     { DriversListSheet(drivers: []) }
         .sheet(isPresented: $showingVehiclesList)    { VehiclesListSheet(vehicles: supabase.vehicles) }
         .sheet(isPresented: $showingTripsList)       { TripsListSheet(trips: supabase.trips) }
-        .sheet(isPresented: $showingMaintenanceList) { MaintenanceListSheet(maintenance: supabase.technicians) }
+        .sheet(isPresented: $showingMaintenanceList) { MaintenanceListSheet(maintenance: []) }
     }
 }
 
