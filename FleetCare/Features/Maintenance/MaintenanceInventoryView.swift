@@ -9,6 +9,8 @@ struct MaintenanceInventoryView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: FleetSpacing.large) {
+                searchAndFilterBar
+                
                 categoryHeader
 
                 LazyVStack(spacing: FleetSpacing.medium) {
@@ -31,7 +33,10 @@ struct MaintenanceInventoryView: View {
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                categoryMenu
+                NavigationLink(destination: AccountView()) {
+                    Image(systemName: "person.crop.circle")
+                }
+                .accessibilityLabel("Account")
             }
         }
         .sheet(item: $selectedPart) { part in
@@ -39,8 +44,8 @@ struct MaintenanceInventoryView: View {
                 part: part,
                 forecast: viewModel.forecast(for: part)
             )
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
+            .presentationDetents([.large])
+            .presentationDragIndicator(.hidden)
         }
     }
 
@@ -52,12 +57,35 @@ struct MaintenanceInventoryView: View {
 //                .textCase(.uppercase)
 
             Text(viewModel.selectedCategory.rawValue)
-                .font(.title3.bold())
+                .font(.title3.weight(.semibold))
                 .foregroundStyle(.brandPrimary)
                 .contentTransition(.opacity)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Category, \(viewModel.selectedCategory.rawValue)")
+    }
+
+    private var searchAndFilterBar: some View {
+        HStack(spacing: FleetSpacing.medium) {
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                TextField("Search inventory", text: $viewModel.searchText)
+                if !viewModel.searchText.isEmpty {
+                    Button(action: {
+                        viewModel.searchText = ""
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding(10)
+            .background(Color(uiColor: .systemGray6))
+            .cornerRadius(10)
+
+            categoryMenu
+        }
     }
 
     private var categoryMenu: some View {
@@ -75,7 +103,11 @@ struct MaintenanceInventoryView: View {
             }
         } label: {
             Image(systemName: "line.3.horizontal")
-                .font(.headline)
+                .font(.title2)
+                .foregroundStyle(.primary)
+                .padding(10)
+                .background(Color(uiColor: .systemGray6))
+                .clipShape(Circle())
         }
         .accessibilityLabel("Select inventory category")
     }
@@ -86,6 +118,7 @@ struct MaintenanceInventoryView: View {
 @MainActor
 final class MaintenanceInventoryViewModel: ObservableObject {
     @Published private(set) var selectedCategory: InventoryCategory = .all
+    @Published var searchText: String = ""
 
     let categories = InventoryCategory.allCases
     private var parts: [InventoryPart] {
@@ -93,8 +126,14 @@ final class MaintenanceInventoryViewModel: ObservableObject {
     }
 
     var filteredParts: [InventoryPart] {
-        guard selectedCategory != .all else { return parts }
-        return parts.filter { $0.category == selectedCategory }
+        var result = parts
+        if selectedCategory != .all {
+            result = result.filter { $0.category == selectedCategory }
+        }
+        if !searchText.isEmpty {
+            result = result.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        }
+        return result
     }
 
     func select(_ category: InventoryCategory) {
@@ -153,7 +192,7 @@ private struct InventoryPartCard: View {
         Button(action: action) {
             HStack(alignment: .firstTextBaseline, spacing: FleetSpacing.large) {
                 Text(part.name)
-                    .font(.title3.weight(.semibold))
+                    .font(.callout.weight(.medium))
                     .foregroundStyle(.primary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
@@ -161,7 +200,7 @@ private struct InventoryPartCard: View {
                 Spacer(minLength: FleetSpacing.medium)
 
                 Text("\(part.currentQuantity) Units")
-                    .font(.headline.weight(.medium))
+                    .font(.callout.weight(.semibold))
                     .foregroundStyle(unitsColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
@@ -195,6 +234,8 @@ private struct InventoryPressButtonStyle: ButtonStyle {
 // MARK: - Detail Sheet
 
 private struct InventoryPartDetailSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
     let part: InventoryPart
     let forecast: InventoryForecast
 
@@ -214,7 +255,19 @@ private struct InventoryPartDetailSheet: View {
                 .padding(.bottom, FleetSpacing.large)
             }
             .background(Color.appBackground)
+            .navigationTitle("Part Details")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.headline)
+                    }
+                    .accessibilityLabel("Close")
+                }
+            }
             .confirmationDialog(
                 "Request Purchase for \(part.name) \(forecast.recommendedReorderQuantity) Units",
                 isPresented: $showingReorderDialog,

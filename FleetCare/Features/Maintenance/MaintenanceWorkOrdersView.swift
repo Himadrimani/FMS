@@ -32,8 +32,8 @@ struct MaintenanceWorkOrdersView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: FleetSpacing.xLarge) {
 
-                // MARK: Filter Segments
-                filterPicker
+                // MARK: Search & Filter Bar
+                searchAndFilterBar
 
                 // MARK: Urgent Banner
                 if selectedFilter != .urgent {
@@ -49,10 +49,9 @@ struct MaintenanceWorkOrdersView: View {
             }
             .padding()
         }
-        .searchable(text: $searchText, prompt: "Search work orders")
         .background(Color.appBackground)
         .navigationTitle("Work Orders")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink(destination: AccountView()) {
@@ -62,13 +61,40 @@ struct MaintenanceWorkOrdersView: View {
             }
         }
     }
-    private var filterPicker: some View {
-        Picker("Filter", selection: $selectedFilter) {
-            Text("Pending").tag(WorkOrderFilter.pending)
-            Text("In Progress").tag(WorkOrderFilter.inProgress)
-            Text("Completed").tag(WorkOrderFilter.completed)
+    private var searchAndFilterBar: some View {
+        HStack(spacing: FleetSpacing.medium) {
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                TextField("Search work orders", text: $searchText)
+                if !searchText.isEmpty {
+                    Button(action: {
+                        searchText = ""
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding(10)
+            .background(Color(uiColor: .systemGray6))
+            .cornerRadius(10)
+
+            Menu {
+                Picker("Filter", selection: $selectedFilter) {
+                    Text("Pending").tag(WorkOrderFilter.pending)
+                    Text("In Progress").tag(WorkOrderFilter.inProgress)
+                    Text("Completed").tag(WorkOrderFilter.completed)
+                }
+            } label: {
+                Image(systemName: "line.3.horizontal")
+                    .font(.title2)
+                    .foregroundStyle(.primary)
+                    .padding(10)
+                    .background(Color(uiColor: .systemGray6))
+                    .clipShape(Circle())
+            }
         }
-        .pickerStyle(.segmented)
     }
 
     // MARK: - Urgent Banner

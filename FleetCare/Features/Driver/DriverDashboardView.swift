@@ -7,12 +7,17 @@
 import SwiftUI
 import UIKit
 
+enum DashboardInspectionStatus { case pending, inProgress, passed }
 
 struct DriverDashboardView: View {
     let vehicle: Vehicle
     let trips: [FleetTrip]
 
     @State private var showInspection = false
+    @StateObject private var inspectionVM = InspectionVM()
+    @State private var showReportDefect = false
+    @State private var showNavigation = false
+    @State private var showEmergencySOS = false
         var body: some View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
@@ -302,9 +307,6 @@ extension DriverDashboardView {
         .background(Color.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.orange.opacity(0.25)))
     }
-
-
-
     private var quickActions: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("QUICK ACTIONS")
@@ -312,26 +314,23 @@ extension DriverDashboardView {
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 12) {
-                QuickAction(title: "Messages") {
-                    Image(systemName: "message.fill")
-                        .foregroundStyle(.white)
-                        .frame(width: 40, height: 40)
-                        .background(.blue, in: Circle())
-                } action: { }
-
                 QuickAction(title: "Report Defect") {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.white)
                         .frame(width: 40, height: 40)
                         .background(.red, in: Circle())
-                } action: { }
+                } action: {
+                    showReportDefect = true
+                }
 
                 QuickAction(title: "Resume Navigation") {
                     Image(systemName: "location.fill")
                         .foregroundStyle(.green)
                         .frame(width: 40, height: 40)
                         .background(Color.green.opacity(0.18), in: Circle())
-                } action: { }
+                } action: {
+                    showNavigation = true
+                }
 
                 QuickAction(title: "Emergency SOS") {
                     Text("SOS")
@@ -339,8 +338,17 @@ extension DriverDashboardView {
                         .foregroundStyle(.white)
                         .frame(width: 40, height: 40)
                         .background(.red, in: Circle())
-                } action: { }
+                } action: {
+                    showEmergencySOS = true
+                }
             }
+            .navigationDestination(isPresented: $showReportDefect) {
+                        ReportDefectView(vm: inspectionVM)
+                    }
+            .navigationDestination(isPresented: $showNavigation) {
+                        TripNavigationView(trip: trip)}
+                    .navigationDestination(isPresented: $showEmergencySOS) {
+                        EmergencySOSView()}
         }
         .padding(.top, 4)
     }

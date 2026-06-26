@@ -21,14 +21,6 @@ struct MaintenanceDashboardView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: FleetSpacing.xLarge) {
                 
-                // Title
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Home")
-                        .font(.largeTitle.bold())
-                }
-                .padding(.horizontal)
-                .padding(.top, FleetSpacing.medium)
-                
                 // MARK: - Overview
                 VStack(alignment: .leading, spacing: FleetSpacing.medium) {
                     Text("Overview")
@@ -86,7 +78,7 @@ struct MaintenanceDashboardView: View {
         }
         .background(Color.appBackground)
         .navigationTitle("Dashboard")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink(destination: AccountView()) {

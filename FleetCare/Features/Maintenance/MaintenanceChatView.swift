@@ -6,17 +6,6 @@ struct MaintenanceChatView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: FleetSpacing.large) {
-                // Header
-                VStack(alignment: .leading, spacing: FleetSpacing.small) {
-                    Text("Your conversations")
-                        .font(.title2.bold())
-                    Text("Message the Fleet Manager or Driver directly.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, FleetSpacing.small)
-
                 // MARK: Fleet Manager Channel
                 NavigationLink {
                     MaintenanceChatDetailView(channel: .fleetManager)
@@ -53,7 +42,7 @@ struct MaintenanceChatView: View {
         }
         .background(Color.appBackground)
         .navigationTitle("Chat")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink(destination: AccountView()) {
@@ -77,52 +66,49 @@ private struct ChatChannelCard: View {
     let symbol: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: FleetSpacing.medium) {
-            HStack(spacing: FleetSpacing.medium) {
-                // Avatar
-                ZStack {
-                    Circle()
-                        .fill(accentColor.opacity(0.15))
-                        .frame(width: 48, height: 48)
-                    Image(systemName: symbol)
-                        .font(.title3)
-                        .foregroundStyle(accentColor)
-                }
-
-                VStack(alignment: .leading, spacing: FleetSpacing.xSmall) {
-                    HStack {
-                        Text(title)
-                            .font(.headline)
-                        Spacer()
-                        Text(time)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+        HStack(alignment: .center, spacing: FleetSpacing.medium) {
+            // Avatar
+            ZStack {
+                Circle()
+                    .fill(Color(uiColor: .systemGray6))
+                    .frame(width: 56, height: 56)
+                Image(systemName: symbol)
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
             }
 
-            Text(lastMessage)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-
-            if unreadCount > 0 {
+            VStack(alignment: .leading, spacing: 4) {
                 HStack {
+                    Text(title)
+                        .font(.title3.weight(.semibold))
                     Spacer()
-                    Text("\(unreadCount) new")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, FleetSpacing.small)
-                        .padding(.vertical, FleetSpacing.xSmall)
-                        .background(accentColor, in: Capsule())
+                    Text(time)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                
+                HStack {
+                    Text(lastMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    
+                    Spacer()
+                    
+                    if unreadCount > 0 {
+                        Text("\(unreadCount)")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 20, height: 20)
+                            .background(Color.red, in: Circle())
+                    }
                 }
             }
         }
-        .padding(FleetSpacing.large)
-        .background(.background.secondary, in: .rect(cornerRadius: FleetRadius.card))
+        .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
     }
 }

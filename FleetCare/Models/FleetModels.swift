@@ -1,12 +1,14 @@
 import Foundation
 import SwiftData
 
-enum FleetStatus: String, Codable, CaseIterable {
+enum FleetStatus: String, Codable, CaseIterable, Identifiable {
     case active = "Active"
     case attention = "Needs Attention"
     case scheduled = "Scheduled"
     case completed = "Completed"
     case offline = "Offline"
+    
+    var id: Self { self }
 }
 
 enum InventoryCategory: String, CaseIterable, Identifiable, Codable {
@@ -55,8 +57,10 @@ struct InventoryPart: Identifiable, Hashable {
 // NEW: drives which photo/icon the dashboard shows for a vehicle.
 // Add image sets named vehicle_truck / vehicle_van / vehicle_car /
 // vehicle_2wheeler in Assets.xcassets and they're used automatically.
-enum VehicleType: String, Codable, CaseIterable {
+enum VehicleType: String, Codable, CaseIterable, Identifiable {
     case truck, van, car, twoWheeler, bus, auto
+    
+    var id: Self { self }
 
     var assetName: String {
         switch self {
@@ -257,4 +261,85 @@ final class FleetMessage {
         self.sentAt = sentAt
         self.isUnread = isUnread
     }
+}
+
+@Model
+final class Driver: Identifiable {
+    @Attribute(.unique) var id: UUID
+    var name: String
+    var phone: String
+    var licenseNumber: String
+    var statusRaw: String
+    var currentVehicleID: UUID?
+    var currentTripID: UUID?
+    var assignedAt: Date?
+
+    init(
+        id: UUID = UUID(),
+        name: String,
+        phone: String,
+        licenseNumber: String,
+        status: DriverStatus = .available,
+        currentVehicleID: UUID? = nil,
+        currentTripID: UUID? = nil,
+        assignedAt: Date? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.phone = phone
+        self.licenseNumber = licenseNumber
+        self.statusRaw = status.rawValue
+        self.currentVehicleID = currentVehicleID
+        self.currentTripID = currentTripID
+        self.assignedAt = assignedAt
+    }
+
+    var status: DriverStatus {
+        get { DriverStatus(rawValue: statusRaw) ?? .available }
+        set { statusRaw = newValue.rawValue }
+    }
+}
+
+enum DriverStatus: String, Codable, CaseIterable, Identifiable {
+    case available = "Available"
+    case onTrip = "On Trip"
+    case offline = "Offline"
+    
+    var id: Self { self }
+}
+
+@Model
+final class MaintenancePersonnel: Identifiable {
+    @Attribute(.unique) var id: UUID
+    var name: String
+    var phone: String
+    var specialization: String
+    var statusRaw: String
+
+    init(
+        id: UUID = UUID(),
+        name: String,
+        phone: String,
+        specialization: String,
+        status: MaintenanceStatus = .available
+    ) {
+        self.id = id
+        self.name = name
+        self.phone = phone
+        self.specialization = specialization
+        self.statusRaw = status.rawValue
+    }
+
+    var status: MaintenanceStatus {
+        get { MaintenanceStatus(rawValue: statusRaw) ?? .available }
+        set { statusRaw = newValue.rawValue }
+    }
+}
+
+enum MaintenanceStatus: String, Codable, CaseIterable, Identifiable {
+    case available = "Available"
+    case busy = "Busy"
+    case offline = "Offline"
+    
+    var id: Self { self }
 }
