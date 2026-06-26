@@ -12,6 +12,7 @@ struct ManagerDashboardView: View {
     @StateObject private var supabase = SupabaseService.shared
     @State private var showAssignTripSheet = false
     @State private var showCreateWorkOrderSheet = false
+    @State private var showAccountSheet = false
 
     private var activeVehiclesCount: Int {
         supabase.vehicles.filter { $0.status == .active }.count
@@ -67,7 +68,7 @@ struct ManagerDashboardView: View {
                         .clipShape(Circle())
                 }
                 
-                Button(action: {}) {
+                Button(action: { showAccountSheet = true }) {
                     Text("DM")
                         .font(.subheadline.bold())
                         .foregroundColor(.white)
@@ -75,6 +76,11 @@ struct ManagerDashboardView: View {
                         .background(Color.blue)
                         .clipShape(Circle())
                 }
+            }
+        }
+        .sheet(isPresented: $showAccountSheet) {
+            NavigationStack {
+                AccountView()
             }
         }
     }
