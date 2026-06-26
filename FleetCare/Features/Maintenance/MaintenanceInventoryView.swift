@@ -39,8 +39,8 @@ struct MaintenanceInventoryView: View {
                 part: part,
                 forecast: viewModel.forecast(for: part)
             )
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
+            .presentationDetents([.large])
+            .presentationDragIndicator(.hidden)
         }
     }
 
@@ -52,7 +52,7 @@ struct MaintenanceInventoryView: View {
 //                .textCase(.uppercase)
 
             Text(viewModel.selectedCategory.rawValue)
-                .font(.title3.bold())
+                .font(.title3.weight(.semibold))
                 .foregroundStyle(.brandPrimary)
                 .contentTransition(.opacity)
         }
@@ -151,7 +151,7 @@ private struct InventoryPartCard: View {
         Button(action: action) {
             HStack(alignment: .firstTextBaseline, spacing: FleetSpacing.large) {
                 Text(part.name)
-                    .font(.title3.weight(.semibold))
+                    .font(.callout.weight(.medium))
                     .foregroundStyle(.primary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
@@ -159,7 +159,7 @@ private struct InventoryPartCard: View {
                 Spacer(minLength: FleetSpacing.medium)
 
                 Text("\(part.currentQuantity) Units")
-                    .font(.headline.weight(.medium))
+                    .font(.callout.weight(.semibold))
                     .foregroundStyle(unitsColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
@@ -193,6 +193,8 @@ private struct InventoryPressButtonStyle: ButtonStyle {
 // MARK: - Detail Sheet
 
 private struct InventoryPartDetailSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
     let part: InventoryPart
     let forecast: InventoryForecast
 
@@ -212,7 +214,19 @@ private struct InventoryPartDetailSheet: View {
                 .padding(.bottom, FleetSpacing.large)
             }
             .background(Color.appBackground)
+            .navigationTitle("Part Details")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.headline)
+                    }
+                    .accessibilityLabel("Close")
+                }
+            }
             .confirmationDialog(
                 "Request Purchase for \(part.name) \(forecast.recommendedReorderQuantity) Units",
                 isPresented: $showingReorderDialog,
