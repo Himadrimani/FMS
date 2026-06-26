@@ -27,11 +27,7 @@ struct FleetManagerTabView: View {
 // MARK: - Home
 
 struct FleetManagerHomeView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var drivers: [Driver]
-    @Query private var vehicles: [Vehicle]
-    @Query private var trips: [FleetTrip]
-    @Query private var maintenance: [MaintenancePersonnel]
+    @StateObject private var supabase = SupabaseService.shared
 
     @State private var showingAddDriver      = false
     @State private var showingAddMaintenance = false
@@ -77,7 +73,7 @@ struct FleetManagerHomeView: View {
                 ) {
                     OverviewCard(
                         title: "Drivers",
-                        value: "\(drivers.count)",
+                        value: "\(supabase.drivers.count)",
                         detail: "total drivers",
                         symbol: "person.2.fill",
                         tint: .brandPrimary
@@ -85,7 +81,7 @@ struct FleetManagerHomeView: View {
 
                     OverviewCard(
                         title: "Vehicles",
-                        value: "\(vehicles.count)",
+                        value: "\(supabase.vehicles.count)",
                         detail: "total vehicles",
                         symbol: "car.2.fill",
                         tint: .green
@@ -93,7 +89,7 @@ struct FleetManagerHomeView: View {
 
                     OverviewCard(
                         title: "Trips",
-                        value: "\(trips.count)",
+                        value: "\(supabase.trips.count)",
                         detail: "total trips",
                         symbol: "clock.badge.checkmark.fill",
                         tint: .orange
@@ -101,7 +97,7 @@ struct FleetManagerHomeView: View {
 
                     OverviewCard(
                         title: "Maintenance",
-                        value: "\(maintenance.count)",
+                        value: "\(supabase.technicians.count)",
                         detail: "personnel",
                         symbol: "wrench.and.screwdriver.fill",
                         tint: .purple
@@ -114,7 +110,7 @@ struct FleetManagerHomeView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Live Driver Locations")
                                 .font(.title3.bold())
-                            Text("\(drivers.filter { $0.status == .onTrip }.count) drivers currently on trip")
+                            Text("\(supabase.trips.filter { $0.status == .active }.count) drivers currently on trip")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -205,10 +201,10 @@ struct FleetManagerHomeView: View {
         .sheet(isPresented: $showingAddMaintenance)  { AddMaintenanceSheet() }
         .sheet(isPresented: $showingAddVehicle)      { AddVehicleSheet() }
         .sheet(isPresented: $showingAddTrip)         { AddTripSheet() }
-        .sheet(isPresented: $showingDriversList)     { DriversListSheet(drivers: drivers) }
-        .sheet(isPresented: $showingVehiclesList)    { VehiclesListSheet(vehicles: vehicles) }
-        .sheet(isPresented: $showingTripsList)       { TripsListSheet(trips: trips) }
-        .sheet(isPresented: $showingMaintenanceList) { MaintenanceListSheet(maintenance: maintenance) }
+        .sheet(isPresented: $showingDriversList)     { DriversListSheet(drivers: supabase.drivers) }
+        .sheet(isPresented: $showingVehiclesList)    { VehiclesListSheet(vehicles: supabase.vehicles) }
+        .sheet(isPresented: $showingTripsList)       { TripsListSheet(trips: supabase.trips) }
+        .sheet(isPresented: $showingMaintenanceList) { MaintenanceListSheet(maintenance: supabase.technicians) }
     }
 }
 
