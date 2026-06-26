@@ -7,6 +7,7 @@
 import SwiftUI
 import UIKit
 
+enum DashboardInspectionStatus { case pending, inProgress, passed }
 
 struct DriverDashboardView: View {
     let vehicle: Vehicle

@@ -14,7 +14,9 @@ struct FleetCareApp: App {
             Vehicle.self,
             FleetTrip.self,
             WorkOrder.self,
-            FleetMessage.self
+            FleetMessage.self,
+            Driver.self,
+            MaintenancePersonnel.self
         ])
     }
 }

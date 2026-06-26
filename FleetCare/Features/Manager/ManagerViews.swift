@@ -4,23 +4,7 @@ import SwiftUI
 
 struct ManagerTabView: View {
     var body: some View {
-        TabView {
-            Tab("Overview", systemImage: "rectangle.grid.2x2.fill") {
-                NavigationStack { ManagerDashboardView() }
-            }
-            Tab("Fleet", systemImage: "car.2.fill") {
-                NavigationStack { FleetListView() }
-            }
-            Tab("Map", systemImage: "map.fill") {
-                NavigationStack { FleetMapView() }
-            }
-            Tab("Insights", systemImage: "chart.xyaxis.line") {
-                NavigationStack { InsightsView() }
-            }
-            Tab("More", systemImage: "ellipsis") {
-                NavigationStack { MoreFeaturesView(role: .fleetManager) }
-            }
-        }
+        FleetManagerTabView()
     }
 }
 
