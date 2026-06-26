@@ -346,7 +346,10 @@ extension DriverDashboardView {
                         ReportDefectView(vm: inspectionVM)
                     }
             .navigationDestination(isPresented: $showNavigation) {
-                        TripNavigationView(trip: trip)}
+                if let firstTrip = trips.first {
+                    TripNavigationView(trip: firstTrip)
+                }
+            }
                     .navigationDestination(isPresented: $showEmergencySOS) {
                         EmergencySOSView()}
         }
