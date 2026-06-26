@@ -33,9 +33,9 @@ struct DriverTabView: View {
             Tab("Messages", systemImage: "message.fill") {
                 NavigationStack { MessagesView() }
             }
-            Tab("More", systemImage: "ellipsis") {
-                NavigationStack { MoreFeaturesView(role: .driver) }
-            }
+//            Tab("More", systemImage: "ellipsis") {
+//                NavigationStack { MoreFeaturesView(role: .driver) }
+//            }
         }
     }
 }
