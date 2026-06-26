@@ -13,16 +13,18 @@ struct TripNavigationView: View {
     @Environment(\.dismiss) private var dismiss
 
     // Map region centred on Pune
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 18.5204, longitude: 73.8567),
-        span: MKCoordinateSpan(latitudeDelta: 0.15, longitudeDelta: 0.15)
+    @State private var position: MapCameraPosition = .region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 18.5204, longitude: 73.8567),
+            span: MKCoordinateSpan(latitudeDelta: 0.15, longitudeDelta: 0.15)
+        )
     )
 
     var body: some View {
         ZStack(alignment: .bottom) {
 
             // ── Full-screen map ──────────────────────────────────────
-            Map(coordinateRegion: $region)
+            Map(position: $position)
                 .ignoresSafeArea()
 
             // ── Bottom sheet card ────────────────────────────────────
@@ -129,6 +131,6 @@ struct TripNavigationView: View {
 // MARK: - Preview
 #Preview {
     NavigationStack {
-        TripNavigationView(trip: SampleData.trips[0])
+        TripNavigationView(trip: FleetTrip(title: "Demo Trip", origin: "Mumbai", destination: "Pune", scheduledAt: Date(), status: .active, distanceKilometers: 150.0))
     }
 }
